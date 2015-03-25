@@ -373,32 +373,36 @@ int exploitation(map<ll,qualifiedVM> omega)
 	return index;
 }
 
-int exploration(map<ll,qualifiedVM> omega)
+int exploration(map<ll,qualifiedVM> omega)                  //This is not working properly
 {
-	map<ll,qualifiedVM>:: iterator it;
-	ll probabDistribution[2][MAX];
-	for(register int i=0;i<MAX;i++)
+	double probabDistribution[2][MAX];
+	for(int i=0;i<2;i++)
 	{
-		for(register int j=0;j<2;j++)
+		for(int j=0;j<MAX;j++)
 		{
 			probabDistribution[i][j]=0;
 		}
 	}
 	int i=0;
-	ll sum=0;
-	probabDistribution[0][i]=(ll)(it->second.probability)*100;
+	double sum=0;
+	map<ll,qualifiedVM>:: iterator it=omega.begin();
+	sum=probabDistribution[0][i]=(it->second.probability)*100;
 	probabDistribution[1][i++]=(it->first);
-	for(it=omega.begin();it!=omega.end();it++)
+	
+	it++;
+	for(it;it!=omega.end();it++)
 	{
-		probabDistribution[0][i]=probabDistribution[0][i-1]+(ll)(it->second.probability)*100;
+		probabDistribution[0][i]=probabDistribution[0][i-1]+(it->second.probability)*100;
 		sum=probabDistribution[0][i];
 		probabDistribution[1][i++]=(it->first);
 	}
-	ll num=rand()%(sum+1);
+	ll num=rand()%((ll)(ceil(sum)));
 	for(register int j=0;j<i;j++)
 	{
-		if(num<=probabDistribution[0][i])
-		return (int)probabDistribution[1][i];
+		if(num<=probabDistribution[0][j])
+		{
+			return (int)probabDistribution[1][j];
+		}
 	}
 }
 
