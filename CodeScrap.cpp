@@ -71,9 +71,9 @@ int main() {
 	/* ********************* User Input ************************************* */
 	
 	ll n,m;
-	cout<<"Number of Virtual Machines: ";
+	// cout<<"Number of Virtual Machines: ";
 	cin>>n;
-	cout<<"\nNumber of Available Servers: ";
+	// cout<<"\nNumber of Available Servers: ";
 	cin>>m;
 	
 	if(n>MAX || m>MAX)           // Putting Bounds
@@ -84,9 +84,9 @@ int main() {
 	
 	VM vm[n];
 	Server server[m];
-	cout<<"\nEnter CPU Demand and Memory Demand of each VM:";
+	// cout<<"\nEnter CPU Demand and Memory Demand of each VM:";
 	for(register int i=0;i<n;i++) cin>>vm[i].CPU>>vm[i].MEM;
-	cout<<"\nEnter Threshold CPU utilization and Threshold Memory utilization of each Server: ";
+	// cout<<"\nEnter Threshold CPU utilization and Threshold Memory utilization of each Server: ";
 	for(register int i=0;i<m;i++) {	cin>>server[i].ThreshCPU>>server[i].ThreshMEM; server[i].peakPower=INT_MIN; }
 	
 	/* *********************** Initialization ******************************* */
@@ -159,6 +159,7 @@ int main() {
 			1.Calculate values of P(S) and W(S) for each solution S
 			2.Update the Pareto set according to dominations
 		*/
+		
 		updatePandW(CurrentSol,vm,n,server,m);
 		updateDomination(ParetoSet,CurrentSol);
 		updateParetoIteration(ParetoSet);
@@ -206,24 +207,32 @@ void generateGreedySolution(solution& S0, Server server[], ll m, VM vm[], ll n)
 			remCPU-=vm[i].CPU;remMEM-=vm[i].MEM;
 		}
 		else{
-			normalisedCPU=(((server[j].ThreshCPU)-remCPU)/server[j].ThreshCPU);
-			normalisedMEM=(((server[j].ThreshCPU)-remMEM)/server[j].ThreshMEM);
-			normalisedRemCPU=(remCPU/server[j].ThreshCPU);
-			normalisedRemMEM=(remMEM/server[j].ThreshMEM);
-			resourceWastage+=((abs(normalisedRemCPU-normalisedRemMEM)+E)/(normalisedCPU+normalisedMEM));
-			server[j].peakPower=((Pbusy-Pidle)*normalisedCPU+Pidle);
-			normalisedPowerConsumption+=(((Pbusy-Pidle)*normalisedCPU+Pidle)/server[j].peakPower);
+			normalisedCPU=(((server[j].ThreshCPU)-remCPU)/(double)server[j].ThreshCPU);
+			normalisedMEM=(((server[j].ThreshMEM)-remMEM)/(double)server[j].ThreshMEM);
+			normalisedRemCPU=(remCPU/(double)server[j].ThreshCPU);
+			normalisedRemMEM=(remMEM/(double)server[j].ThreshMEM);
+			resourceWastage+=((abs(normalisedRemCPU-normalisedRemMEM)+E)/(double)(normalisedCPU+normalisedMEM));
+			server[j].peakPower=((Pbusy-Pidle)*(double)normalisedCPU+Pidle);
+			normalisedPowerConsumption+=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle/server[j].peakPower);
 			j++;
 			remCPU=server[j].ThreshCPU;remMEM=server[j].ThreshMEM;
 		}
 	}
+	normalisedCPU=(((server[j].ThreshCPU)-remCPU)/(double)server[j].ThreshCPU);
+	normalisedMEM=(((server[j].ThreshMEM)-remMEM)/(double)server[j].ThreshMEM);
+	normalisedRemCPU=(remCPU/(double)server[j].ThreshCPU);
+	normalisedRemMEM=(remMEM/(double)server[j].ThreshMEM);
+	resourceWastage+=((abs(normalisedRemCPU-normalisedRemMEM)+E)/(double)(normalisedCPU+normalisedMEM));
+	server[j].peakPower=((Pbusy-Pidle)*(double)normalisedCPU+Pidle);
+	normalisedPowerConsumption+=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle/server[j].peakPower);
+
 	S0.P=normalisedPowerConsumption;
 	S0.W=resourceWastage;
 }
 
 void initializePheromone(double pheromoneTrail[][MAX],solution S0,Server b[],ll m, VM a[], ll n)
 {
-	double t0=1/(n*(S0.P+S0.W));
+	double t0=1/(double)(n*(S0.P+S0.W));
 	T0=t0;
 	for(register int i=0;i<n;i++)
 	{
@@ -270,7 +279,7 @@ void setInitials(solution& a)
 bool compatibleVM(solution antSol,int i,VM vm[],ll n,int j,Server s,map<ll,qualifiedVM> omega)
 {
 	ll remCPU=s.ThreshMEM,remMEM=s.ThreshCPU;
-	if(antSol.array[i]==-1 && omega.find(i)==omega.cend())
+	if(antSol.array[i]==-1 && (omega.find((ll)i)==omega.cend()))
 	{
 		for(register int k=0;k<n;k++)
 		{
