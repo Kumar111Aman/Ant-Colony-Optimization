@@ -184,12 +184,12 @@ int main() {
 
 bool getServer(Server a, Server b)				//compare function for randomSort function
 {
-	return ((((REL_PARAMETER)*a.ThreshCPU)+((1-REL_PARAMETER)*a.ThreshMEM))>(((REL_PARAMETER)*b.ThreshCPU)+((1-REL_PARAMETER)*b.ThreshMEM)));
+	return ((((REL_PARAMETER)*(double)a.ThreshCPU)+((1-REL_PARAMETER)*(double)a.ThreshMEM))>(((REL_PARAMETER)*(double)b.ThreshCPU)+((1-REL_PARAMETER)*(double)b.ThreshMEM)));
 }
 
 bool getVM(VM a, VM b)							//compare function for randomSortVM function
 {
-	return ((((REL_PARAMETER)*a.CPU)+((1-REL_PARAMETER)*a.MEM))<(((REL_PARAMETER)*b.CPU)+((1-REL_PARAMETER)*b.MEM)));
+	return ((((REL_PARAMETER)*(double)a.CPU)+((1-REL_PARAMETER)*(double)a.MEM))<(((REL_PARAMETER)*(double)b.CPU)+((1-REL_PARAMETER)*(double)b.MEM)));
 }
 
 void generateGreedySolution(solution& S0, Server server[], ll m, VM vm[], ll n)
@@ -354,7 +354,7 @@ void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServ
 
 double drawQ()
 {
-	return (rand()%101)/100;
+	return ((double)(rand()%101))/100;
 }
 
 int exploitation(map<ll,qualifiedVM> omega)
