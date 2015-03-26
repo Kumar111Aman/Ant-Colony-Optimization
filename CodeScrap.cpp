@@ -10,12 +10,12 @@
 
 #define ll long long
 #define MAX 100
-#define NO_OF_ANTS 10
-#define NO_OF_ITERATIONS 50
-#define RHO_LOCAL 20
-#define RHO_GLOBAL 30
-#define ALPHA 0.5
-#define Q0 0.3
+#define NO_OF_ANTS 2
+#define NO_OF_ITERATIONS 5
+#define RHO_LOCAL 0.35
+#define RHO_GLOBAL 0.35
+#define ALPHA 0.45
+#define Q0 0.8
 #define REL_PARAMETER 0.5
 #define E 0.0001
 #define Pbusy 215
@@ -47,24 +47,25 @@ typedef struct o
 
 /* **** Function Declaration ************************************************ */
 
-/* Done */ bool getServer(Server a, Server b);
-/* Done */ bool getVM(VM a, VM b);
-/* Done */ void generateGreedySolution(solution& S0, Server server[],ll m, VM vm[],ll n);
-/* Done */ void initializePheromone(double pheromoneTrail[][MAX],solution S0,Server b[],ll m, VM a[], ll n);
-/* Done */ void randomSort(Server server[], ll len);
-/* Done */ void randomSortVM(VM vm[], ll len);
-/* Done */ void setInitials(solution& a);
-/* Done */ bool compatibleVM(solution antSol,int i,VM vm[],ll n,int j,Server s,map<ll,qualifiedVM> omega);
-/* Done */ void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServer,Server server[],ll m,double pheromoneTrail[][MAX]);  //will use 1,2 to update t
-/* Done */ double drawQ();
-/* Done */ int exploitation(map<ll,qualifiedVM> omega);   //return maximum of probability
-/* Done */ int exploration(map<ll,qualifiedVM> omega);    //return random number according to probability
-/* Done */ void localPheromoneUpdate(double pheromoneTrail[][MAX], int i, int j);
-/* Done */ void updatePandW(vector<solution>& CurrSol,VM vm[],ll n,Server server[],ll m);
-/* Done */ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol);
-/* Done */ void updateParetoIteration(vector<solution>& ParetoSet);
-/* Done */ void globalPheromoneUpdate(double pheromoneTrail[][MAX],solution s,ll t);
-/* Done */ void printSolution(vector<solution> ParetoSet,int totalVM);
+bool getServer(Server a, Server b);
+bool getVM(VM a, VM b);
+void generateGreedySolution(solution& S0, Server server[],ll m, VM vm[],ll n);
+void initializePheromone(double pheromoneTrail[][MAX],solution S0,Server b[],ll m, VM a[], ll n);
+void randomSort(Server server[], ll len);
+void randomSortVM(VM vm[], ll len);
+void setInitials(solution& a);
+bool compatibleVM(solution antSol,int i,VM vm[],ll n,int j,Server s,map<ll,qualifiedVM> omega);
+void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServer,Server server[],ll m,double pheromoneTrail[][MAX]);  //will use 1,2 to update t
+double drawQ();
+int exploitation(map<ll,qualifiedVM> omega);   //return maximum of probability
+int exploration(map<ll,qualifiedVM> omega);    //return random number according to probability
+void localPheromoneUpdate(double pheromoneTrail[][MAX], int i, int j);
+void updatePandW(vector<solution>& CurrSol,VM vm[],ll n,Server server[],ll m);
+void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol);
+void updateParetoIteration(vector<solution>& ParetoSet);
+void globalPheromoneUpdate(double pheromoneTrail[][MAX],solution s,ll t);
+void printSolution(vector<solution> ParetoSet,int totalVM);
+
 
 int main() {
 	
@@ -204,7 +205,7 @@ void generateGreedySolution(solution& S0, Server server[], ll m, VM vm[], ll n)
 		if(remCPU>=vm[i].CPU && remMEM>=vm[i].MEM)
 		{
 			S0.array[i]=j;
-			remCPU-=vm[i].CPU;remMEM-=vm[i].MEM;
+			remCPU-=(vm[i].CPU);remMEM-=(vm[i].MEM);
 		}
 		else{
 			normalisedCPU=(((server[j].ThreshCPU)-remCPU)/(double)server[j].ThreshCPU);
@@ -215,6 +216,7 @@ void generateGreedySolution(solution& S0, Server server[], ll m, VM vm[], ll n)
 			server[j].peakPower=((Pbusy-Pidle)*(double)normalisedCPU+Pidle);
 			normalisedPowerConsumption+=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle/server[j].peakPower);
 			j++;
+			i--;
 			remCPU=server[j].ThreshCPU;remMEM=server[j].ThreshMEM;
 		}
 	}
@@ -225,7 +227,7 @@ void generateGreedySolution(solution& S0, Server server[], ll m, VM vm[], ll n)
 	resourceWastage+=((abs(normalisedRemCPU-normalisedRemMEM)+E)/(double)(normalisedCPU+normalisedMEM));
 	server[j].peakPower=((Pbusy-Pidle)*(double)normalisedCPU+Pidle);
 	normalisedPowerConsumption+=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle/server[j].peakPower);
-
+	
 	S0.P=normalisedPowerConsumption;
 	S0.W=resourceWastage;
 }
@@ -327,13 +329,13 @@ void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServ
 		if(sum[0][i])                      //Here we can reduce the number of rows by taking variable for each row
 		{
 			//Used CPU to total CPU
-			sum[2][i]=(sum[0][i]/server[i].ThreshCPU);
+			sum[2][i]=(sum[0][i]/(double)server[i].ThreshCPU);
 			//Used MEM to total MEM
-			sum[3][i]=(sum[1][i]/server[i].ThreshMEM);
+			sum[3][i]=(sum[1][i]/(double)server[i].ThreshMEM);
 			//Remaining CPU to total MEM
-			sum[4][i]=((server[i].ThreshCPU-sum[0][i])/server[i].ThreshCPU);
+			sum[4][i]=((server[i].ThreshCPU-sum[0][i])/(double)server[i].ThreshCPU);
 			//Remaining MEM to total MEM
-			sum[5][i]=(server[i].ThreshMEM-sum[1][i])/server[i].ThreshMEM;
+			sum[5][i]=(server[i].ThreshMEM-sum[1][i])/(double)server[i].ThreshMEM;
 			//Calculating P
 			sum[6][i]=((Pbusy-Pidle)*sum[2][i])+Pidle;
 			if(sum[6][i]>server[i].peakPower)
@@ -341,14 +343,14 @@ void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServ
 				server[i].peakPower=sum[6][i];
 			}
 			//Calculating normalised power of each server
-			sum[7][i]=sum[6][i]/server[i].peakPower;
+			sum[7][i]=sum[6][i]/(double)server[i].peakPower;
 			summationP+=sum[7][i];
 			//Calculating W
-			sum[8][i]=(abs(sum[4][i]-sum[5][i])+E)/(sum[2][i]+sum[3][i]);
+			sum[8][i]=(abs(sum[4][i]-sum[5][i])+E)/(double)(sum[2][i]+sum[3][i]);
 			summationW+=sum[8][i];
 		}
 	}
-	t.desirability=/*for objective 1*/1/(E+summationP)+/*for objective 2*/1/(E+summationW);
+	t.desirability=/*for objective 1*/1/(double)(E+summationP)+/*for objective 2*/1/(double)(E+summationW);
 	t.probability=(ALPHA*pheromoneTrail[nextVM][nextServer])+((1-ALPHA)*t.desirability);
 }
 
@@ -396,7 +398,7 @@ int exploration(map<ll,qualifiedVM> omega)                  //This is not workin
 		sum=probabDistribution[0][i];
 		probabDistribution[1][i++]=(it->first);
 	}
-	ll num=rand()%((ll)(ceil(sum)));
+	ll num=rand()%((ll)(ceil(sum+1)));
 	for(register int j=0;j<i;j++)
 	{
 		if(num<=probabDistribution[0][j])
@@ -408,7 +410,7 @@ int exploration(map<ll,qualifiedVM> omega)                  //This is not workin
 
 void localPheromoneUpdate(double pheromoneTrail[][MAX], int i, int j)
 {
-	pheromoneTrail[i][j]=(1-RHO_LOCAL)*pheromoneTrail[i][j] + (RHO_LOCAL*T0);
+	pheromoneTrail[i][j]=(double)(1-RHO_LOCAL)*pheromoneTrail[i][j] + (RHO_LOCAL*T0);
 }
 
 void updatePandW(vector<solution>& CurrSol,VM vm[],ll n,Server server[],ll m)
@@ -439,20 +441,20 @@ void updatePandW(vector<solution>& CurrSol,VM vm[],ll n,Server server[],ll m)
 			if(sum[0][i])                      //Here we can reduce the number of rows by taking variable for each row
 			{
 				//Used CPU to total CPU
-				sum[2][i]=(sum[0][i]/server[i].ThreshCPU);
+				sum[2][i]=(sum[0][i]/(double)server[i].ThreshCPU);
 				//Used MEM to total MEM
-				sum[3][i]=(sum[1][i]/server[i].ThreshMEM);
+				sum[3][i]=(sum[1][i]/(double)server[i].ThreshMEM);
 				//Remaining CPU to total MEM
-				sum[4][i]=((server[i].ThreshCPU-sum[0][i])/server[i].ThreshCPU);
+				sum[4][i]=((server[i].ThreshCPU-sum[0][i])/(double)server[i].ThreshCPU);
 				//Remaining MEM to total MEM
-				sum[5][i]=(server[i].ThreshMEM-sum[1][i])/server[i].ThreshMEM;
+				sum[5][i]=(server[i].ThreshMEM-sum[1][i])/((double)server[i].ThreshMEM);
 				//Calculating P
 				sum[6][i]=((Pbusy-Pidle)*sum[2][i])+Pidle;
 				//Calculating normalised power of each server
-				sum[7][i]=sum[6][i]/server[i].peakPower;
+				sum[7][i]=sum[6][i]/(double)server[i].peakPower;
 				summationP+=sum[7][i];
 				//Calculating W
-				sum[8][i]=(abs(sum[4][i]-sum[5][i])+E)/(sum[2][i]+sum[3][i]);
+				sum[8][i]=(abs(sum[4][i]-sum[5][i])+E)/(double)(sum[2][i]+sum[3][i]);
 				summationW+=sum[8][i];
 			}
 		}
@@ -484,7 +486,7 @@ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 			}
 		}
 	}
-	for(register int i=0;i<CurrSol.size();i++)                   //All elements of current set are compared to all elements of paretoset
+	for(register int i=0;i<CurrSol.size();i++)                   //All elements of current set are compared to all elements of currentset
 	{
 		for(register int j=0;j<CurrSol.size();j++)
 		{
@@ -542,11 +544,11 @@ void updateParetoIteration(vector<solution>& ParetoSet)
 
 void globalPheromoneUpdate(double pheromoneTrail[][MAX],solution s,ll t)
 {
-	double lembda=NO_OF_ANTS/(t-s.NO_OF_IT+1);
-	double B=((RHO_GLOBAL*lembda)/(s.P+s.W));
+	double lembda=(double)NO_OF_ANTS/((double)(t-s.NO_OF_IT+1));
+	double B=((RHO_GLOBAL*lembda)/((double)(s.P+s.W)));
 	for(register int i=0;i<MAX;i++)
 	{
-		pheromoneTrail[i][s.array[i]]=((1-RHO_GLOBAL)*pheromoneTrail[i][s.array[i]])+B;
+		pheromoneTrail[i][s.array[i]]=(double)((1-RHO_GLOBAL)*pheromoneTrail[i][s.array[i]])+B;
 	}
 }
 
@@ -554,11 +556,11 @@ void printSolution(vector<solution> ParetoSet, int totalVM)
 {
 	for(register int i=0;i<ParetoSet.size();i++)
 	{
-		cout<<"\nSolution "<<i+1<<":"<<endl;
+		cout<<"Solution "<<i+1<<":"<<endl;
 		for(register int j=0;j<totalVM;j++)
 		{
 			cout<<j<<" - "<<ParetoSet[i].array[j]<<endl;
 		}
-		cout<<"Power Wastage: "<<ParetoSet[i].P<<"\t"<<"Memory Wastage: "<<ParetoSet[i].W;
+		cout<<"Power Wastage: "<<ParetoSet[i].P<<"\t"<<"Memory Wastage: "<<ParetoSet[i].W<<endl;
 	}
 }
