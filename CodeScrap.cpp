@@ -31,6 +31,7 @@ typedef struct v
 typedef struct s
 {
 	ll ThreshCPU, ThreshMEM;
+	ll serverID;
 	double peakPower;
 }Server;
 typedef struct ss
