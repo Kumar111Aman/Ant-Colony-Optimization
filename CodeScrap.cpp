@@ -45,6 +45,21 @@ typedef struct o
 	double desirability,probability;
 }qualifiedVM;
 
+struct point{
+	int x1,y1;
+	int x2,y2;
+};
+////////////////////////////////////////////////////////////////////
+int size = 4, no_of_vm = 6;
+VM v_machines[6];
+Server server[4];
+struct point p_machines[4];
+int vm_allot[6] = { 0,0,0,1,3,2 };
+void print_machinnes();
+void initialize_v_machines();
+void initialize_p_machines(Server server[],ll );
+void print_V_machines(VM [],ll ,ll,vector<solution>,int);
+////////////////////////////////////////////////////////////////////////
 
 /* **** Function Declaration ************************************************ */
 
@@ -190,11 +205,20 @@ int main() {
 	}
 	printSolution(ParetoSet,n);								//Print Pareto set
 	/* Result Display Block */
-	//
-	//                                                   //Amandeep's part
-	//
-	//
-	/* Result Display Block */
+	int gd = DETECT, gm;
+	initgraph(&gd, &gm, "C:\\TC\\BGI");
+	
+	for(int c=0;c<ParetoSet.size();c++)
+	{
+		initialize_p_machines(server,size);
+		print_machinnes();
+		initialize_v_machines();
+		print_V_machines(vm,n,m,ParetoSet,c);
+		getch();
+		cleardevice();
+	}
+	getch();
+	closegraph();
 	return 0;
 }
 
@@ -583,3 +607,76 @@ void printSolution(vector<solution> ParetoSet, int totalVM)
 		cout<<"Power Wastage: "<<ParetoSet[i].P<<"\t"<<"Memory Wastage: "<<ParetoSet[i].W<<endl;
 	}
 }
+
+
+
+////////////////////////////////
+////////////////////////////////
+
+void print_V_machines(VM vm[] , ll n,ll m,vector<solution> ParetoSet,int k )
+{
+	int i,j;
+	for(i=0;i<m;i++)
+	{
+		int a,b;
+		a = p_machines[i].x1;
+		b = p_machines[i].y2;
+		for(j=0;j<n;j++)
+		{
+			if( ParetoSet[k].array[j] == i )
+			{
+				int cpu , mem ,xtemp , ytemp;
+				cpu = (vm[j].CPU*3)/100;
+				mem = (vm[j].MEM*4)/100;
+				xtemp = a + (p_machines[i].x2 - p_machines[i].x1 -cpu)/2 + cpu;
+				ytemp = b;
+				a = a+(p_machines[i].x2 - p_machines[i].x1-cpu)/2;
+				b = b - mem;
+				rectangle(a,b,xtemp,ytemp);
+				a = a - (p_machines[i].x2 - p_machines[i].x1-cpu)/2;
+				char text[5];
+				sprintf(text,"%02d",j+1);
+				outtextxy(a,b+mem-10,text);
+			}
+		}
+	}
+}
+
+void print_machinnes()
+{
+	int i;
+	for(i=0;i<size;i++)
+	{
+		rectangle(p_machines[i].x1,p_machines[i].y1,
+		p_machines[i].x2,p_machines[i].y2);
+		char text[5];
+		sprintf(text,"PM %d",i+1);
+		outtextxy(p_machines[i].x1+5,
+		p_machines[i].y2+20,text);
+	}
+}
+
+void initialize_p_machines(Server server[],ll m)
+{
+	int i,j;
+	for(i=0,j=0;i<m;i++,j+=100)
+	{
+		p_machines[i].x1=j+10;
+		p_machines[i].y2=340;
+		p_machines[i].y1=p_machines[i].y2 - server[i].ThreshMEM*40;
+		p_machines[i].x2=p_machines[i].x1+30*server[i].ThreshCPU;
+	}
+}
+
+void initialize_v_machines()
+{
+	v_machines[0].CPU = 200; v_machines[0].MEM = 500;
+	v_machines[1].CPU = 300; v_machines[1].MEM = 400;
+	v_machines[2].CPU = 700; v_machines[2].MEM = 500;
+	v_machines[3].CPU = 500; v_machines[3].MEM = 600;
+	v_machines[4].CPU = 200; v_machines[4].MEM = 200;
+	v_machines[5].CPU = 400; v_machines[5].MEM = 200;
+}
+
+/////////////////////////////////////
+/////////////////////////////////////
