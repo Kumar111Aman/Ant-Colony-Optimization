@@ -10,8 +10,8 @@
 
 #define ll long long
 #define MAX 100
-#define NO_OF_ANTS 2
-#define NO_OF_ITERATIONS 5
+#define NO_OF_ANTS 3
+#define NO_OF_ITERATIONS 1
 #define RHO_LOCAL 0.35
 #define RHO_GLOBAL 0.35
 #define ALPHA 0.45
@@ -31,7 +31,7 @@ typedef struct v
 typedef struct s
 {
 	ll ThreshCPU, ThreshMEM;
-	ll serverID;
+	int serverID;
 	double peakPower;
 }Server;
 typedef struct ss
@@ -85,11 +85,27 @@ int main() {
 	}
 	
 	VM vm[n];
+	VM vmClone[n];
 	Server server[m];
+	Server serverClone[m];
 	// cout<<"\nEnter CPU Demand and Memory Demand of each VM:";
-	for(register int i=0;i<n;i++) cin>>vm[i].CPU>>vm[i].MEM;
+	for(register int i=0;i<n;i++)
+	{
+		cin>>vm[i].CPU>>vm[i].MEM;
+		vmClone[i].CPU=vm[i].CPU;
+		vmClone[i].MEM=vm[i].MEM;
+	}
 	// cout<<"\nEnter Threshold CPU utilization and Threshold Memory utilization of each Server: ";
-	for(register int i=0;i<m;i++) {	cin>>server[i].ThreshCPU>>server[i].ThreshMEM; server[i].peakPower=INT_MIN; }
+	for(register int i=0;i<m;i++)
+	{	
+		cin>>server[i].ThreshCPU>>server[i].ThreshMEM;
+		server[i].peakPower=INT_MIN;
+		server[i].serverID=i;
+		serverClone[i].ThreshCPU=server[i].ThreshCPU;
+		serverClone[i].ThreshMEM=server[i].ThreshMEM;
+		serverClone[i].peakPower=INT_MIN;
+		serverClone[i].serverID=i;
+	}
 	
 	/* *********************** Initialization ******************************* */
 	
@@ -97,8 +113,8 @@ int main() {
 	double pheromoneTrail[MAX][MAX];
 	solution S0;
 	setInitials(S0);
-	generateGreedySolution(S0,server,m,vm,n);
-	randomSortVM(vm,n);
+	generateGreedySolution(S0,serverClone,m,vmClone,n);
+	//randomSortVM(vm,n);
 	initializePheromone(pheromoneTrail,S0,server,m,vm,n);
 	
 	/* *********************** Iterative Loop ******************************* */
@@ -108,7 +124,7 @@ int main() {
 		vector<solution> CurrentSol;
 		for(register int k=1;k<=NO_OF_ANTS;k++)
 		{
-			randomSort(server,m);
+			randomSort(serverClone,m);
 			solution antSol;
 			setInitials(antSol);
 			ll VMcount=0;
@@ -121,10 +137,10 @@ int main() {
 					map<ll,qualifiedVM> omega;
 					for(register int i=0;i<n;i++)
 					{
-						if(compatibleVM(antSol,i,vm,n,j,server[j],omega))
+						if(compatibleVM(antSol,i,vm,n,serverClone[j].serverID,serverClone[j],omega))
 						{
 							qualifiedVM t;      		    			 		 //Create set of these VM's
-							prepare(t,i,antSol,vm,n,j,server,m,pheromoneTrail);      //getdesirability();getprobability();
+							prepare(t,i,antSol,vm,n,server[j].serverID,server,m,pheromoneTrail);      //getdesirability();getprobability();
 							omega[i]=t;
 						}
 					}
@@ -138,15 +154,15 @@ int main() {
 					if(q<=Q0)
 					{
 						i=exploitation(omega);					//Exploitaion - Generate i(VM) to place in this host
-						antSol.array[i]=j;
+						antSol.array[i]=serverClone[j].serverID;
 					}
 					else
 					{
 						i=exploration(omega);					//Exploration Get any number according to the probability distribution function formula
-						antSol.array[i]=j;
+						antSol.array[i]=serverClone[j].serverID;
 					}
 					VMcount++;                              //Incrementing, since another VM got placed
-					localPheromoneUpdate(pheromoneTrail,i,j);					//Apply Local updating Rule
+					localPheromoneUpdate(pheromoneTrail,i,server[j].serverID);					//Apply Local updating Rule
 				}
 				if(VMcount==n)		/*If all VM's are placed */       //break of server choosing
 				{
@@ -257,6 +273,7 @@ void randomSort(Server server[], ll len)
 	}
 }
 
+/*
 void randomSortVM(VM vm[], ll len)
 {
 	for(register int i=len-1;i>=0;i--)
@@ -267,6 +284,7 @@ void randomSortVM(VM vm[], ll len)
 		vm[index]=temp;
 	}
 }
+*/
 
 void setInitials(solution& a)
 {
@@ -286,7 +304,7 @@ bool compatibleVM(solution antSol,int i,VM vm[],ll n,int j,Server s,map<ll,quali
 	{
 		for(register int k=0;k<n;k++)
 		{
-			if(antSol.array[k]==j)
+			if(antSol.array[k]!=-1 && antSol.array[k]==j)
 			{
 				remCPU-=(vm[k].CPU);
 				remMEM-=(vm[k].MEM);
@@ -477,9 +495,9 @@ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 		{
 			for(register int j=0;j<CurrSol.size();j++)
 			{
-				if(ParetoSet[i].P>CurrSol[j].P || ParetoSet[i].W>CurrSol[j].W)
+				if(abs(ParetoSet[i].P-1)>abs(CurrSol[j].P-1) || ParetoSet[i].W>CurrSol[j].W)
 				{
-					if(ParetoSet[i].P>=CurrSol[j].P && ParetoSet[i].W>=CurrSol[j].W)
+					if(abs(ParetoSet[i].P-1)>=abs(CurrSol[j].P-1) && ParetoSet[i].W>=CurrSol[j].W)
 					{
 						CurrSol[j].dominated=true;
 					}
@@ -493,9 +511,9 @@ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 		{
 			if(i!=j && !CurrSol[j].dominated)
 			{
-				if(CurrSol[i].P>CurrSol[j].P || CurrSol[i].W>CurrSol[j].W)
+				if(abs(CurrSol[i].P-1)>abs(CurrSol[j].P-1) || CurrSol[i].W>CurrSol[j].W)
 				{
-					if(CurrSol[i].P>=CurrSol[j].P && CurrSol[i].W>=CurrSol[j].W)
+					if(abs(CurrSol[i].P-1)>=abs(CurrSol[j].P-1) && CurrSol[i].W>=CurrSol[j].W)
 					{
 						CurrSol[j].dominated=true;
 					}
@@ -521,9 +539,9 @@ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 			{
 				for(register int j=0;j<ParetoSet.size();j++)
 				{
-					if(CurrSol[i].P>ParetoSet[j].P || CurrSol[i].W>ParetoSet[j].W)
+					if(abs(CurrSol[i].P-1)>abs(ParetoSet[j].P-1) || CurrSol[i].W>ParetoSet[j].W)
 					{
-						if(CurrSol[i].P>=ParetoSet[j].P && CurrSol[i].W>=ParetoSet[j].W)
+						if(abs(CurrSol[i].P-1)>=abs(ParetoSet[j].P-1) && CurrSol[i].W>=ParetoSet[j].W)
 						{
 							ParetoSet.erase(ParetoSet.begin()+j);       //Erased Dominated solution from paretoset
 						}
