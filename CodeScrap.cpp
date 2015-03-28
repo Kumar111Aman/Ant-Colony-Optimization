@@ -4,14 +4,15 @@
 #include <iostream>
 #include <vector>
 #include<algorithm>
+//#include<graphics.h>
 #include<cmath>
 #include<map>
 #include<climits>
 
 #define ll long long
 #define MAX 100
-#define NO_OF_ANTS 3
-#define NO_OF_ITERATIONS 1
+#define NO_OF_ANTS 15
+#define NO_OF_ITERATIONS 5
 #define RHO_LOCAL 0.35
 #define RHO_GLOBAL 0.35
 #define ALPHA 0.45
@@ -44,12 +45,13 @@ typedef struct o
 {
 	double desirability,probability;
 }qualifiedVM;
-
 struct point{
 	int x1,y1;
 	int x2,y2;
 };
-////////////////////////////////////////////////////////////////////
+
+/* **** AmanDeep's ********************************************************** */
+
 int size = 4, no_of_vm = 6;
 VM v_machines[6];
 Server server[4];
@@ -59,7 +61,6 @@ void print_machinnes();
 void initialize_v_machines();
 void initialize_p_machines(Server server[],ll );
 void print_V_machines(VM [],ll ,ll,vector<solution>,int);
-////////////////////////////////////////////////////////////////////////
 
 /* **** Function Declaration ************************************************ */
 
@@ -133,8 +134,8 @@ int main() {
 	initializePheromone(pheromoneTrail,S0,server,m,vm,n);
 	
 	/* *********************** Iterative Loop ******************************* */
-	ll it=1;
-	while(it<=NO_OF_ITERATIONS)
+	
+	for(int it=1;it<=NO_OF_ITERATIONS;it++)
 	{
 		vector<solution> CurrentSol;
 		for(register int k=1;k<=NO_OF_ANTS;k++)
@@ -143,10 +144,8 @@ int main() {
 			solution antSol;
 			setInitials(antSol);
 			ll VMcount=0;
-			int j=-1;
-			while(true && j<m)
+			for(int j=0;j<m;j++)
 			{
-				j++;										//choose a server - j
 				while(true)
 				{
 					map<ll,qualifiedVM> omega;
@@ -201,10 +200,10 @@ int main() {
 		{
 			globalPheromoneUpdate(pheromoneTrail,ParetoSet[p],it);						//Apply Global Updating 
 		}
-		it++;                                               //For outer loop
 	}
 	printSolution(ParetoSet,n);								//Print Pareto set
 	/* Result Display Block */
+	/*
 	int gd = DETECT, gm;
 	initgraph(&gd, &gm, "C:\\TC\\BGI");
 	
@@ -219,6 +218,8 @@ int main() {
 	}
 	getch();
 	closegraph();
+	*/
+	/* Result Display Block */
 	return 0;
 }
 
@@ -519,9 +520,9 @@ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 		{
 			for(register int j=0;j<CurrSol.size();j++)
 			{
-				if(abs(ParetoSet[i].P-1)>abs(CurrSol[j].P-1) || ParetoSet[i].W>CurrSol[j].W)
+				if(abs(ParetoSet[i].P-1)<abs(CurrSol[j].P-1) || ParetoSet[i].W<CurrSol[j].W)
 				{
-					if(abs(ParetoSet[i].P-1)>=abs(CurrSol[j].P-1) && ParetoSet[i].W>=CurrSol[j].W)
+					if(abs(ParetoSet[i].P-1)<=abs(CurrSol[j].P-1) && ParetoSet[i].W<=CurrSol[j].W)
 					{
 						CurrSol[j].dominated=true;
 					}
@@ -535,9 +536,9 @@ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 		{
 			if(i!=j && !CurrSol[j].dominated)
 			{
-				if(abs(CurrSol[i].P-1)>abs(CurrSol[j].P-1) || CurrSol[i].W>CurrSol[j].W)
+				if(abs(CurrSol[i].P-1)<abs(CurrSol[j].P-1) || CurrSol[i].W<CurrSol[j].W)
 				{
-					if(abs(CurrSol[i].P-1)>=abs(CurrSol[j].P-1) && CurrSol[i].W>=CurrSol[j].W)
+					if(abs(CurrSol[i].P-1)<=abs(CurrSol[j].P-1) && CurrSol[i].W<=CurrSol[j].W)
 					{
 						CurrSol[j].dominated=true;
 					}
@@ -563,15 +564,31 @@ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 			{
 				for(register int j=0;j<ParetoSet.size();j++)
 				{
-					if(abs(CurrSol[i].P-1)>abs(ParetoSet[j].P-1) || CurrSol[i].W>ParetoSet[j].W)
+					if(abs(CurrSol[i].P-1)<abs(ParetoSet[j].P-1) || CurrSol[i].W<ParetoSet[j].W)
 					{
-						if(abs(CurrSol[i].P-1)>=abs(ParetoSet[j].P-1) && CurrSol[i].W>=ParetoSet[j].W)
+						if(abs(CurrSol[i].P-1)<=abs(ParetoSet[j].P-1) && CurrSol[i].W<=ParetoSet[j].W)
 						{
 							ParetoSet.erase(ParetoSet.begin()+j);       //Erased Dominated solution from paretoset
 						}
 					}
 				}
 				ParetoSet.push_back(CurrSol[i]);
+			}
+		}
+		for(register int i=0;i<ParetoSet.size();i++)
+		{
+			for(register int j=0;j<ParetoSet.size();j++)
+			{
+				if(i!=j && !ParetoSet[j].dominated)
+				{
+					if(abs(ParetoSet[i].P-1)<abs(ParetoSet[j].P-1) || ParetoSet[i].W<ParetoSet[j].W)
+					{
+						if(abs(ParetoSet[i].P-1)<=abs(ParetoSet[j].P-1) && ParetoSet[i].W<=ParetoSet[j].W)
+						{
+							ParetoSet.erase(ParetoSet.begin()+j);       //Erased Dominated solution from paretoset
+						}
+					}
+				}
 			}
 		}
 	}
@@ -608,11 +625,8 @@ void printSolution(vector<solution> ParetoSet, int totalVM)
 	}
 }
 
-
-
-////////////////////////////////
-////////////////////////////////
-
+/* **** AmanDeep's ********************************************************** */
+/*
 void print_V_machines(VM vm[] , ll n,ll m,vector<solution> ParetoSet,int k )
 {
 	int i,j;
@@ -677,6 +691,4 @@ void initialize_v_machines()
 	v_machines[4].CPU = 200; v_machines[4].MEM = 200;
 	v_machines[5].CPU = 400; v_machines[5].MEM = 200;
 }
-
-/////////////////////////////////////
-/////////////////////////////////////
+*/
