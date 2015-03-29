@@ -8,7 +8,7 @@
 #include<climits>
  
 #define ll long long
-#define MAX 100
+#define MAX 50
 #define NO_OF_ANTS 15
 #define NO_OF_ITERATIONS 5
 #define RHO_LOCAL 0.35
@@ -26,6 +26,7 @@ double T0;
 typedef struct v
 {
 	ll CPU, MEM;
+	int vmID;
 }VM;
 typedef struct s
 {
@@ -45,10 +46,11 @@ typedef struct o
 }qualifiedVM;
 
 /* **** Function Declaration ************************************************ */
- 
+
+bool check(VM vm[],ll n,Server server[],ll m); 
 bool getServer(Server a, Server b);
 bool getVM(VM a, VM b);
-void generateGreedySolution(solution& S0, Server server[],ll m, VM vm[],ll n);
+void generateGreedySolution(solution& S0, Server server[], Server serverO[], ll m, VM vm[], VM vmO[],ll n);
 bool ifIll(solution S0, int n);
 void initializePheromone(double pheromoneTrail[][MAX],solution S0,Server b[],ll m, VM a[], ll n);
 void randomSort(Server server[], ll len);
@@ -68,7 +70,7 @@ void deleteDuplicates(vector<solution>& ParetoSet,int totalVM);
 void findIllSolution(vector<solution>& ParetoSet,int totalVM);
 void printGreedySolution(solution s, int n, int m);
 void printSolution(vector<solution> ParetoSet, int totalVM, int totalServers, solution S0);
-
+//Supporting Functionss
 void randomSortVM(VM vm[], ll len);
 void viewVM(VM v[], ll n);
 void viewServer(Server s[], ll m);
@@ -78,32 +80,44 @@ int main() {
 	/* ********************* User Input ************************************* */
  
 	ll n,m;
+	double vmM,vmC,serverM,serverC;
+	
 	// cout<<"Number of Virtual Machines: ";
 	cin>>n;
-	// cout<<"\nNumber of Available Servers: ";
-	cin>>m;
- 
-	if(n>MAX || m>MAX)           // Putting Bounds
+	if(n>MAX)           // Putting Bounds
 	{
 		cout<<"Out of Bounds\n";
 		return 0;
 	}
- 
 	VM vm[n];
 	VM vmClone[n];
-	Server server[m];
-	Server serverClone[m];
 	// cout<<"\nEnter CPU Demand and Memory Demand of each VM:";
 	for(register int i=0;i<n;i++)
 	{
-		cin>>vm[i].CPU>>vm[i].MEM;
+		cin>>vmC>>vmM;
+		vm[i].CPU=(ll)(10000*vmC);
+		vm[i].MEM=(ll)(10000*vmM);
+		vm[i].vmID=i;
 		vmClone[i].CPU=vm[i].CPU;
 		vmClone[i].MEM=vm[i].MEM;
+		vmClone[i].vmID=i;
 	}
+	
+	// cout<<"\nNumber of Available Servers: ";
+	cin>>m;
+	if(m>MAX)           // Putting Bounds
+	{
+		cout<<"Out of Bounds\n";
+		return 0;
+	}
+	Server server[m];
+	Server serverClone[m];
 	// cout<<"\nEnter Threshold CPU utilization and Threshold Memory utilization of each Server: ";
 	for(register int i=0;i<m;i++)
 	{	
-		cin>>server[i].ThreshCPU>>server[i].ThreshMEM;
+		cin>>serverC>>serverM;
+		server[i].ThreshCPU=(ll)(10000*serverC);
+		server[i].ThreshMEM=(ll)(10000*serverM);
 		server[i].peakPower=INT_MIN;
 		server[i].serverID=i;
 		serverClone[i].ThreshCPU=server[i].ThreshCPU;
@@ -111,20 +125,26 @@ int main() {
 		serverClone[i].peakPower=INT_MIN;
 		serverClone[i].serverID=i;
 	}
- 
+	
+ 	if(!check(vm,n,server,m))                    //Checking whether input data is in limit or not
+ 	{
+ 		cout<<"Input Data Error!!\n";
+ 		return 0;
+ 	}
+ 	
 	/* *********************** Initialization ******************************* */
  
 	vector<solution> ParetoSet;
 	double pheromoneTrail[MAX][MAX];
 	solution S0;
 	setInitials(S0);
-	generateGreedySolution(S0,serverClone,m,vmClone,n);
+	generateGreedySolution(S0,serverClone,server,m,vmClone,vm,n);
 	if(ifIll(S0,n))
 	{
 		cout<<"No Greedy Solution Found!!\n";
 		return 0;
 	}
-	//printSolution(S0,n,m);
+	//printGreedySolution(S0,n,m);
 	//randomSortVM(vm,n);
 	initializePheromone(pheromoneTrail,S0,server,m,vm,n);
  
@@ -208,6 +228,47 @@ int main() {
 }
  
 /* **** Function Definitions ************************************************ */
+
+bool check(VM vm[],ll n,Server server[],ll m)
+{
+	int maxCPU=INT_MIN,maxMEM=INT_MIN;
+	ll vmCPUSum=0,vmMEMSum=0,serverCPUSum=0,serverMEMSum=0;
+	for(register int i=0;i<n;i++)
+	{
+		if(vm[i].CPU>maxCPU)
+		{
+			maxCPU=vm[i].CPU;
+		}
+		if(vm[i].MEM>maxMEM)
+		{
+			maxMEM=vm[i].MEM;
+		}
+		vmCPUSum+=vm[i].CPU;
+		vmMEMSum+=vm[i].MEM;
+	}
+	//cout<<vmCPUSum<<" "<<vmMEMSum<<endl;
+	maxCPU*=2;
+	maxMEM*=2;
+	for(register int i=0;i<m;i++)
+	{
+		//cout<<server[i].ThreshCPU<<" "<<maxCPU<<endl;
+		//cout<<server[i].ThreshMEM<<" "<<maxMEM<<endl;
+		if(server[i].ThreshCPU<maxCPU)
+		{
+			return false;
+		}
+		if(server[i].ThreshMEM<maxMEM)
+		{
+			return false;
+		}
+		serverCPUSum+=server[i].ThreshCPU;
+		serverMEMSum+=server[i].ThreshMEM;
+	}
+	//cout<<serverCPUSum<<" "<<serverMEMSum<<endl;
+	if(serverCPUSum>vmCPUSum && serverMEMSum>vmMEMSum)
+	return true;
+	else return false;
+}
  
 bool getServer(Server a, Server b)				//compare function for randomSort function
 {
@@ -219,12 +280,14 @@ bool getVM(VM a, VM b)							//compare function for randomSortVM function
 	return ((((REL_PARAMETER)*(double)a.CPU)+((1-REL_PARAMETER)*(double)a.MEM))>(((REL_PARAMETER)*(double)b.CPU)+((1-REL_PARAMETER)*(double)b.MEM)));
 }
  
-void generateGreedySolution(solution& S0, Server server[], ll m, VM vm[], ll n)
+void generateGreedySolution(solution& S0, Server server[], Server serverO[], ll m, VM vm[], VM vmO[],ll n)
 {
 	sort(server,server+m, getServer);
-	//viewServer(server,m);
+	// cout<<"servers :\n";
+	// viewServer(server,m);
 	sort(vm, vm+n, getVM);
-	//viewVM(vm,n);
+	// cout<<"vm :\n";
+	// viewVM(vm,n);
 	ll j=0,remCPU=server[0].ThreshCPU,remMEM=server[0].ThreshMEM;
 	double normalisedCPU=0,normalisedMEM=0,normalisedRemCPU=0,normalisedRemMEM=0;
 	double resourceWastage=0,normalisedPowerConsumption=0;
@@ -232,7 +295,8 @@ void generateGreedySolution(solution& S0, Server server[], ll m, VM vm[], ll n)
 	{
 		if(remCPU>=vm[i].CPU && remMEM>=vm[i].MEM)
 		{
-			S0.array[i]=j;
+			S0.array[vm[i].vmID]=server[j].serverID;
+			//S0.array[i]=j;
 			remCPU-=(vm[i].CPU);remMEM-=(vm[i].MEM);
 			continue;
 		}
@@ -305,7 +369,7 @@ void viewServer(Server s[], ll m)
 {
 	for(int i=0;i<m;i++)
 	{
-		cout<<i<<" "<<s[i].ThreshCPU<<" "<<s[i].ThreshMEM<<endl;
+		cout<<s[i].serverID<<" "<<s[i].ThreshCPU<<" "<<s[i].ThreshMEM<<endl;
 	}
 }
 
@@ -324,7 +388,7 @@ void viewVM(VM v[], ll n)
 {
 	for(int i=0;i<n;i++)
 	{
-		cout<<i<<" "<<v[i].CPU<<" "<<v[i].MEM<<endl;
+		cout<<v[i].vmID<<" "<<v[i].CPU<<" "<<v[i].MEM<<endl;
 	}
 }
 
