@@ -49,9 +49,9 @@ typedef struct o
 bool getServer(Server a, Server b);
 bool getVM(VM a, VM b);
 void generateGreedySolution(solution& S0, Server server[],ll m, VM vm[],ll n);
+bool ifIll(solution S0, int n);
 void initializePheromone(double pheromoneTrail[][MAX],solution S0,Server b[],ll m, VM a[], ll n);
 void randomSort(Server server[], ll len);
-void randomSortVM(VM vm[], ll len);
 void setInitials(solution& a);
 bool compatibleVM(solution antSol,int i,VM vm[],ll n,int j,Server s,map<ll,qualifiedVM> omega);
 void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServer,Server server[],ll m,double pheromoneTrail[][MAX]);  //will use 1,2 to update t
@@ -66,8 +66,13 @@ void globalPheromoneUpdate(double pheromoneTrail[][MAX],solution s,ll t);
 bool Isequal(solution a, solution b,int totalVM);
 void deleteDuplicates(vector<solution>& ParetoSet,int totalVM);
 void findIllSolution(vector<solution>& ParetoSet,int totalVM);
-void printSolution(vector<solution> ParetoSet,int totalVM);
- 
+void printGreedySolution(solution s, int n, int m);
+void printSolution(vector<solution> ParetoSet, int totalVM, int totalServers, solution S0);
+
+void randomSortVM(VM vm[], ll len);
+void viewVM(VM v[], ll n);
+void viewServer(Server s[], ll m);
+
 int main() {
  
 	/* ********************* User Input ************************************* */
@@ -114,6 +119,12 @@ int main() {
 	solution S0;
 	setInitials(S0);
 	generateGreedySolution(S0,serverClone,m,vmClone,n);
+	if(ifIll(S0,n))
+	{
+		cout<<"No Greedy Solution Found!!\n";
+		return 0;
+	}
+	//printSolution(S0,n,m);
 	//randomSortVM(vm,n);
 	initializePheromone(pheromoneTrail,S0,server,m,vm,n);
  
@@ -186,8 +197,8 @@ int main() {
 		}
 	}
 	deleteDuplicates(ParetoSet,n);
-	//findIllSolution(ParetoSet,n);
-	printSolution(ParetoSet,n);								//Print Pareto set
+	findIllSolution(ParetoSet,n);
+	printSolution(ParetoSet,n,m,S0);								//Print Pareto set
 	/* Result Display Block */
 	
 	//put solution in file
@@ -205,48 +216,67 @@ bool getServer(Server a, Server b)				//compare function for randomSort function
  
 bool getVM(VM a, VM b)							//compare function for randomSortVM function
 {
-	return ((((REL_PARAMETER)*(double)a.CPU)+((1-REL_PARAMETER)*(double)a.MEM))<(((REL_PARAMETER)*(double)b.CPU)+((1-REL_PARAMETER)*(double)b.MEM)));
+	return ((((REL_PARAMETER)*(double)a.CPU)+((1-REL_PARAMETER)*(double)a.MEM))>(((REL_PARAMETER)*(double)b.CPU)+((1-REL_PARAMETER)*(double)b.MEM)));
 }
  
 void generateGreedySolution(solution& S0, Server server[], ll m, VM vm[], ll n)
 {
 	sort(server,server+m, getServer);
+	//viewServer(server,m);
 	sort(vm, vm+n, getVM);
+	//viewVM(vm,n);
 	ll j=0,remCPU=server[0].ThreshCPU,remMEM=server[0].ThreshMEM;
 	double normalisedCPU=0,normalisedMEM=0,normalisedRemCPU=0,normalisedRemMEM=0;
 	double resourceWastage=0,normalisedPowerConsumption=0;
-	for(register int i=0;i<n;i++)
+	for(register int i=0;(i<n)&&(j<m);i++)
 	{
 		if(remCPU>=vm[i].CPU && remMEM>=vm[i].MEM)
 		{
 			S0.array[i]=j;
 			remCPU-=(vm[i].CPU);remMEM-=(vm[i].MEM);
+			continue;
 		}
-		else{
+		else if(server[j].ThreshCPU!=remCPU)
+		{
 			normalisedCPU=(((server[j].ThreshCPU)-remCPU)/(double)server[j].ThreshCPU);
 			normalisedMEM=(((server[j].ThreshMEM)-remMEM)/(double)server[j].ThreshMEM);
 			normalisedRemCPU=(remCPU/(double)server[j].ThreshCPU);
 			normalisedRemMEM=(remMEM/(double)server[j].ThreshMEM);
-			resourceWastage+=((abs(normalisedRemCPU-normalisedRemMEM)+E)/(double)(normalisedCPU+normalisedMEM));
-			server[j].peakPower=((Pbusy-Pidle)*(double)normalisedCPU+Pidle);
-			normalisedPowerConsumption+=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle/server[j].peakPower);
-			j++;
-			i--;
+			resourceWastage+=((abs(normalisedRemCPU-normalisedRemMEM)+E)/((double)(normalisedCPU+normalisedMEM)));
+			server[j].peakPower=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle);
+			normalisedPowerConsumption+=((((Pbusy-Pidle)*(double)normalisedCPU)+Pidle)/server[j].peakPower);
 			remCPU=server[j].ThreshCPU;remMEM=server[j].ThreshMEM;
 		}
+		j++;
+		i--;
 	}
-	normalisedCPU=(((server[j].ThreshCPU)-remCPU)/(double)server[j].ThreshCPU);
-	normalisedMEM=(((server[j].ThreshMEM)-remMEM)/(double)server[j].ThreshMEM);
-	normalisedRemCPU=(remCPU/(double)server[j].ThreshCPU);
-	normalisedRemMEM=(remMEM/(double)server[j].ThreshMEM);
-	resourceWastage+=((abs(normalisedRemCPU-normalisedRemMEM)+E)/(double)(normalisedCPU+normalisedMEM));
-	server[j].peakPower=((Pbusy-Pidle)*(double)normalisedCPU+Pidle);
-	normalisedPowerConsumption+=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle/server[j].peakPower);
+	if(j<m && server[j].ThreshCPU!=remCPU)
+	{
+		normalisedCPU=(((server[j].ThreshCPU)-remCPU)/(double)server[j].ThreshCPU);
+		normalisedMEM=(((server[j].ThreshMEM)-remMEM)/(double)server[j].ThreshMEM);
+		normalisedRemCPU=(remCPU/(double)server[j].ThreshCPU);
+		normalisedRemMEM=(remMEM/(double)server[j].ThreshMEM);
+		resourceWastage+=((abs(normalisedRemCPU-normalisedRemMEM)+E)/((double)(normalisedCPU+normalisedMEM)));
+		server[j].peakPower=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle);
+		normalisedPowerConsumption+=((((Pbusy-Pidle)*(double)normalisedCPU)+Pidle)/server[j].peakPower);
+	}
  
 	S0.P=normalisedPowerConsumption;
 	S0.W=resourceWastage;
 }
- 
+
+bool ifIll(solution S0, int n)
+{
+	for(register int i=0;i<n;i++)
+	{
+		if(S0.array[i]==-1)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void initializePheromone(double pheromoneTrail[][MAX],solution S0,Server b[],ll m, VM a[], ll n)
 {
 	double t0=1/(double)(n*(S0.P+S0.W));
@@ -271,7 +301,14 @@ void randomSort(Server server[], ll len)
 	}
 }
  
-/*
+void viewServer(Server s[], ll m)
+{
+	for(int i=0;i<m;i++)
+	{
+		cout<<i<<" "<<s[i].ThreshCPU<<" "<<s[i].ThreshMEM<<endl;
+	}
+}
+
 void randomSortVM(VM vm[], ll len)
 {
 	for(register int i=len-1;i>=0;i--)
@@ -282,8 +319,15 @@ void randomSortVM(VM vm[], ll len)
 		vm[index]=temp;
 	}
 }
-*/
- 
+
+void viewVM(VM v[], ll n)
+{
+	for(int i=0;i<n;i++)
+	{
+		cout<<i<<" "<<v[i].CPU<<" "<<v[i].MEM<<endl;
+	}
+}
+
 void setInitials(solution& a)
 {
 	a.P=a.W=0;
@@ -641,12 +685,22 @@ void findIllSolution(vector<solution>& ParetoSet,int totalVM)
 		ParetoSet.erase(ParetoSet.begin()+x);
 	}
 }
+void printGreedySolution(solution s, int n, int m)
+{
+	for(int i=0;i<n;i++)
+	{
+		cout<<i<<"-"<<s.array[i]<<endl;
+	}
+	cout<<"Power: "<<s.P<<"\t"<<"Memory: "<<s.W<<endl;
+}
 
-void printSolution(vector<solution> ParetoSet, int totalVM)
+void printSolution(vector<solution> ParetoSet, int totalVM, int totalServers, solution S0)
 {
 	if(ParetoSet.empty())
 	{
 		cout<<"No Solution Found!!\n";
+		cout<<"Greedy Solution is:\n";
+		printGreedySolution(S0,totalVM,totalServers);
 		return;
 	}
 	for(register int i=0;i<ParetoSet.size();i++)
