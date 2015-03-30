@@ -1,12 +1,13 @@
 /* ***************************(( Project ACO ))****************************** */
- 
-#include <iostream>
-#include <vector>
+
+#include<iostream>
+#include<vector>
 #include<algorithm>
 #include<cmath>
 #include<map>
 #include<climits>
- 
+#include<fstream>
+
 #define ll long long
 #define MAX 50
 #define NO_OF_ANTS 15
@@ -20,9 +21,9 @@
 #define Pbusy 215
 #define Pidle 162
 using namespace std;
- 
+
 double T0;
- 
+
 typedef struct v
 {
 	ll CPU, MEM;
@@ -47,7 +48,7 @@ typedef struct o
 
 /* **** Function Declaration ************************************************ */
 
-bool check(VM vm[],ll n,Server server[],ll m); 
+bool check(VM vm[],ll n,Server server[],ll m);
 bool getServer(Server a, Server b);
 bool getVM(VM a, VM b);
 void generateGreedySolution(solution& S0, Server server[], Server serverO[], ll m, VM vm[], VM vmO[],ll n);
@@ -76,12 +77,12 @@ void viewVM(VM v[], ll n);
 void viewServer(Server s[], ll m);
 
 int main() {
- 
+
 	/* ********************* User Input ************************************* */
- 
+
 	ll n,m;
 	double vmM,vmC,serverM,serverC;
-	
+
 	// cout<<"Number of Virtual Machines: ";
 	cin>>n;
 	if(n>MAX)           // Putting Bounds
@@ -102,7 +103,7 @@ int main() {
 		vmClone[i].MEM=vm[i].MEM;
 		vmClone[i].vmID=i;
 	}
-	
+
 	// cout<<"\nNumber of Available Servers: ";
 	cin>>m;
 	if(m>MAX)           // Putting Bounds
@@ -114,7 +115,7 @@ int main() {
 	Server serverClone[m];
 	// cout<<"\nEnter Threshold CPU utilization and Threshold Memory utilization of each Server: ";
 	for(register int i=0;i<m;i++)
-	{	
+	{
 		cin>>serverC>>serverM;
 		server[i].ThreshCPU=(ll)(10000*serverC);
 		server[i].ThreshMEM=(ll)(10000*serverM);
@@ -125,15 +126,15 @@ int main() {
 		serverClone[i].peakPower=INT_MIN;
 		serverClone[i].serverID=i;
 	}
-	
+
  	if(!check(vm,n,server,m))                    //Checking whether input data is in limit or not
  	{
  		cout<<"Input Data Error!!\n";
  		return 0;
  	}
- 	
+
 	/* *********************** Initialization ******************************* */
- 
+
 	vector<solution> ParetoSet;
 	double pheromoneTrail[MAX][MAX];
 	solution S0;
@@ -147,9 +148,9 @@ int main() {
 	//printGreedySolution(S0,n,m);
 	//randomSortVM(vm,n);
 	initializePheromone(pheromoneTrail,S0,server,m,vm,n);
- 
+
 	/* *********************** Iterative Loop ******************************* */
- 
+
 	for(int it=1;it<=NO_OF_ITERATIONS;it++)
 	{
 		vector<solution> CurrentSol;
@@ -173,7 +174,7 @@ int main() {
 							omega[i]=t;
 						}
 					}
- 
+
 					if(omega.empty())						/*No remaining VM fits into server anymore OR Set is Empty */
 					{
 						break;
@@ -200,33 +201,48 @@ int main() {
 			}
 			CurrentSol.push_back(antSol);
 		}
- 
+
 		/*
 		Evaluate the sets and update it accordingly
 			1.Calculate values of P(S) and W(S) for each solution S
 			2.Update the Pareto set according to dominations
 		*/
- 
+
 		updatePandW(CurrentSol,vm,n,server,m);
 		updateDomination(ParetoSet,CurrentSol);
 		updateParetoIteration(ParetoSet);
- 
+
 		for(register int p=0;p<ParetoSet.size();p++)/* Each non-dominated solution in Pareto set */
 		{
-			globalPheromoneUpdate(pheromoneTrail,ParetoSet[p],it);						//Apply Global Updating 
+			globalPheromoneUpdate(pheromoneTrail,ParetoSet[p],it);						//Apply Global Updating
 		}
 	}
 	deleteDuplicates(ParetoSet,n);
 	findIllSolution(ParetoSet,n);
 	printSolution(ParetoSet,n,m,S0);								//Print Pareto set
 	/* Result Display Block */
-	
-	//put solution in file
-	
+	//putting solution in file
+	ofstream solution ("placedVM.txt");
+	if(solution.is_open())
+    {
+        for(int v=0;v<ParetoSet.size();v++)
+        {
+            solution<<v+1<<":\n";
+            for(int q=0;q<n;q++)
+            {
+                solution<<q<<" "<<ParetoSet[v].array[q]<<endl;
+            }
+        }
+        solution.close();
+    }
+    else
+    {
+        cout<<"File did not open\n";
+    }
 	/* Result Display Block */
 	return 0;
 }
- 
+
 /* **** Function Definitions ************************************************ */
 
 bool check(VM vm[],ll n,Server server[],ll m)
@@ -269,17 +285,17 @@ bool check(VM vm[],ll n,Server server[],ll m)
 	return true;
 	else return false;
 }
- 
+
 bool getServer(Server a, Server b)				//compare function for randomSort function
 {
 	return ((((REL_PARAMETER)*(double)a.ThreshCPU)+((1-REL_PARAMETER)*(double)a.ThreshMEM))>(((REL_PARAMETER)*(double)b.ThreshCPU)+((1-REL_PARAMETER)*(double)b.ThreshMEM)));
 }
- 
+
 bool getVM(VM a, VM b)							//compare function for randomSortVM function
 {
 	return ((((REL_PARAMETER)*(double)a.CPU)+((1-REL_PARAMETER)*(double)a.MEM))>(((REL_PARAMETER)*(double)b.CPU)+((1-REL_PARAMETER)*(double)b.MEM)));
 }
- 
+
 void generateGreedySolution(solution& S0, Server server[], Server serverO[], ll m, VM vm[], VM vmO[],ll n)
 {
 	sort(server,server+m, getServer);
@@ -324,7 +340,7 @@ void generateGreedySolution(solution& S0, Server server[], Server serverO[], ll 
 		server[j].peakPower=(((Pbusy-Pidle)*(double)normalisedCPU)+Pidle);
 		normalisedPowerConsumption+=((((Pbusy-Pidle)*(double)normalisedCPU)+Pidle)/server[j].peakPower);
 	}
- 
+
 	S0.P=normalisedPowerConsumption;
 	S0.W=resourceWastage;
 }
@@ -353,7 +369,7 @@ void initializePheromone(double pheromoneTrail[][MAX],solution S0,Server b[],ll 
 		}
 	}
 }
- 
+
 void randomSort(Server server[], ll len)
 {
 	for(register int i=len-1;i>=0;i--)
@@ -364,7 +380,7 @@ void randomSort(Server server[], ll len)
 		server[index]=temp;
 	}
 }
- 
+
 void viewServer(Server s[], ll m)
 {
 	for(int i=0;i<m;i++)
@@ -402,7 +418,7 @@ void setInitials(solution& a)
 	a.dominated=false;
 	a.NO_OF_IT=0;
 }
- 
+
 bool compatibleVM(solution antSol,int i,VM vm[],ll n,int j,Server s,map<ll,qualifiedVM> omega)
 {
 	ll remCPU=s.ThreshMEM,remMEM=s.ThreshCPU;
@@ -424,7 +440,7 @@ bool compatibleVM(solution antSol,int i,VM vm[],ll n,int j,Server s,map<ll,quali
 	}
 	return false;
 }
- 
+
 void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServer,Server server[],ll m,double pheromoneTrail[][MAX])
 {
 	double sum[9][MAX];
@@ -438,7 +454,7 @@ void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServ
 	for(register int i=0;i<n;i++)
 	{
 		if(antSol.array[i]!=-1)
-		{	
+		{
 			//Used CPU
 			sum[0][antSol.array[i]]+=vm[i].CPU;
 			//Used MEM
@@ -478,12 +494,12 @@ void prepare(qualifiedVM& t,int nextVM,solution antSol,VM vm[],ll n,int nextServ
 	t.desirability=/*for objective 1*/1/(double)(E+summationP)+/*for objective 2*/1/(double)(E+summationW);
 	t.probability=(ALPHA*pheromoneTrail[nextVM][nextServer])+((1-ALPHA)*t.desirability);
 }
- 
+
 double drawQ()
 {
 	return ((double)(rand()%101))/100;
 }
- 
+
 int exploitation(map<ll,qualifiedVM> omega)
 {
 	map<ll,qualifiedVM>::iterator it;
@@ -499,7 +515,7 @@ int exploitation(map<ll,qualifiedVM> omega)
 	}
 	return index;
 }
- 
+
 int exploration(map<ll,qualifiedVM> omega)                  //This is not working properly
 {
 	double probabDistribution[2][MAX];
@@ -515,7 +531,7 @@ int exploration(map<ll,qualifiedVM> omega)                  //This is not workin
 	map<ll,qualifiedVM>:: iterator it=omega.begin();
 	sum=probabDistribution[0][i]=(it->second.probability)*100;
 	probabDistribution[1][i++]=(it->first);
- 
+
 	it++;
 	for(it;it!=omega.end();it++)
 	{
@@ -532,12 +548,12 @@ int exploration(map<ll,qualifiedVM> omega)                  //This is not workin
 		}
 	}
 }
- 
+
 void localPheromoneUpdate(double pheromoneTrail[][MAX], int i, int j)
 {
 	pheromoneTrail[i][j]=(double)(1-RHO_LOCAL)*pheromoneTrail[i][j] + (RHO_LOCAL*T0);
 }
- 
+
 void updatePandW(vector<solution>& CurrSol,VM vm[],ll n,Server server[],ll m)
 {
 	for(register int x=0;x<CurrSol.size();x++)
@@ -553,7 +569,7 @@ void updatePandW(vector<solution>& CurrSol,VM vm[],ll n,Server server[],ll m)
 		for(register int i=0;i<n;i++)
 		{
 			if(CurrSol[x].array[i]!=-1)
-			{	
+			{
 				//Used CPU
 				sum[0][CurrSol[x].array[i]]+=vm[i].CPU;
 				//Used MEM
@@ -587,7 +603,7 @@ void updatePandW(vector<solution>& CurrSol,VM vm[],ll n,Server server[],ll m)
 		CurrSol[x].W=summationW;
 	}
 }
- 
+
 void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 {
 	if(CurrSol.empty())
@@ -674,7 +690,7 @@ void updateDomination(vector<solution>& ParetoSet,vector<solution>& CurrSol)
 		}
 	}
 }
- 
+
 void updateParetoIteration(vector<solution>& ParetoSet)
 {
 	for(register int i=0;i<ParetoSet.size();i++)
@@ -682,7 +698,7 @@ void updateParetoIteration(vector<solution>& ParetoSet)
 		ParetoSet[i].NO_OF_IT++;
 	}
 }
- 
+
 void globalPheromoneUpdate(double pheromoneTrail[][MAX],solution s,ll t)
 {
 	double lembda=(double)NO_OF_ANTS/((double)(t-s.NO_OF_IT+1));
