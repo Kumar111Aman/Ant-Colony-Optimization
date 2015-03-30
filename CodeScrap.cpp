@@ -7,6 +7,7 @@
 #include<map>
 #include<climits>
 #include<fstream>
+#include<stdio.h>
 
 #define ll long long
 #define MAX 50
@@ -80,60 +81,75 @@ int main() {
 
 	/* ********************* User Input ************************************* */
 
-	ll n,m;
-	double vmM,vmC,serverM,serverC;
+    FILE * fp;
+    fp = fopen ("testcase.txt", "r");
+    if (fp==NULL)
+    {
+        cout << "Unable to open file";
+        return 0;
+    }
+    ll n,m;
+    double vmM,vmC,serverM,serverC;
 
-	// cout<<"Number of Virtual Machines: ";
-	cin>>n;
-	if(n>MAX)           // Putting Bounds
-	{
-		cout<<"Out of Bounds\n";
-		return 0;
-	}
-	VM vm[n];
-	VM vmClone[n];
-	// cout<<"\nEnter CPU Demand and Memory Demand of each VM:";
-	for(register int i=0;i<n;i++)
-	{
-		cin>>vmC>>vmM;
-		vm[i].CPU=(ll)(10000*vmC);
-		vm[i].MEM=(ll)(10000*vmM);
-		vm[i].vmID=i;
-		vmClone[i].CPU=vm[i].CPU;
-		vmClone[i].MEM=vm[i].MEM;
-		vmClone[i].vmID=i;
-	}
+    // cout<<"Number of Virtual Machines: ";
+    //cin>>n;
+    fscanf(fp,"%lld",&n);
+    //cout<<n<<endl;
+    if(n>MAX)           // Putting Bounds
+    {
+        cout<<"Out of Bounds\n";
+        return 0;
+    }
+    VM vm[n];
+    VM vmClone[n];
+    // cout<<"\nEnter CPU Demand and Memory Demand of each VM:";
+    for(register int i=0;i<n;i++)
+    {
+        //cin>>vmC>>vmM;
+        fscanf(fp,"%lf %lf",&vmC,&vmM);
+        //cout<<vmC<<" "<<vmM<<endl;
+        vm[i].CPU=(ll)(10000*vmC);
+        vm[i].MEM=(ll)(10000*vmM);
+        vm[i].vmID=i;
+        vmClone[i].CPU=vm[i].CPU;
+        vmClone[i].MEM=vm[i].MEM;
+        vmClone[i].vmID=i;
+    }
+    // cout<<"\nNumber of Available Servers: ";
+    //cin>>m;
+    fscanf(fp,"%lld",&m);
+    //cout<<m<<endl;
+    if(m>MAX)           // Putting Bounds
+    {
+        cout<<"Out of Bounds\n";
+        return 0;
+    }
+    Server server[m];
+    Server serverClone[m];
+    // cout<<"\nEnter Threshold CPU utilization and Threshold Memory utilization of each Server: ";
+    for(register int i=0;i<m;i++)
+    {
+        //cin>>serverC>>serverM;
+        fscanf(fp,"%lf %lf",&serverC,&serverM);
+        //cout<<serverC<<" "<<serverM<<endl;
+        server[i].ThreshCPU=(ll)(10000*serverC);
+        server[i].ThreshMEM=(ll)(10000*serverM);
+        server[i].peakPower=INT_MIN;
+        server[i].serverID=i;
+        serverClone[i].ThreshCPU=server[i].ThreshCPU;
+        serverClone[i].ThreshMEM=server[i].ThreshMEM;
+        serverClone[i].peakPower=INT_MIN;
+        serverClone[i].serverID=i;
+    }
 
-	// cout<<"\nNumber of Available Servers: ";
-	cin>>m;
-	if(m>MAX)           // Putting Bounds
-	{
-		cout<<"Out of Bounds\n";
-		return 0;
-	}
-	Server server[m];
-	Server serverClone[m];
-	// cout<<"\nEnter Threshold CPU utilization and Threshold Memory utilization of each Server: ";
-	for(register int i=0;i<m;i++)
-	{
-		cin>>serverC>>serverM;
-		server[i].ThreshCPU=(ll)(10000*serverC);
-		server[i].ThreshMEM=(ll)(10000*serverM);
-		server[i].peakPower=INT_MIN;
-		server[i].serverID=i;
-		serverClone[i].ThreshCPU=server[i].ThreshCPU;
-		serverClone[i].ThreshMEM=server[i].ThreshMEM;
-		serverClone[i].peakPower=INT_MIN;
-		serverClone[i].serverID=i;
-	}
+    if(!check(vm,n,server,m))                    //Checking whether input data is in limit or not
+    {
+        cout<<"Input Data Error!!\n";
+        return 0;
+    }
+    fclose(fp);
 
- 	if(!check(vm,n,server,m))                    //Checking whether input data is in limit or not
- 	{
- 		cout<<"Input Data Error!!\n";
- 		return 0;
- 	}
-
-	/* *********************** Initialization ******************************* */
+    /* *********************** Initialization ******************************* */
 
 	vector<solution> ParetoSet;
 	double pheromoneTrail[MAX][MAX];
@@ -222,22 +238,69 @@ int main() {
 	printSolution(ParetoSet,n,m,S0);								//Print Pareto set
 	/* Result Display Block */
 	//putting solution in file
-	ofstream solution ("placedVM.txt");
+	ofstream solution ("DataFile.txt");
 	if(solution.is_open())
     {
+        solution<<n<<endl;
+        for(int v=0;v<n;v++)
+        {
+            solution<<(double)vm[v].CPU/10000<<" "<<(double)vm[v].MEM/10000<<endl;
+        }
+        solution<<m<<endl;
+        for(int v=0;v<m;v++)
+        {
+            solution<<(double)server[v].ThreshCPU/10000<<" "<<(double)server[v].ThreshMEM/10000<<endl;
+        }
+        if(ParetoSet.size()!=0) solution<<ParetoSet.size()<<endl;
         for(int v=0;v<ParetoSet.size();v++)
         {
-            solution<<v+1<<":\n";
+            //solution<<v+1<<endl;
+            solution<<endl;
             for(int q=0;q<n;q++)
             {
                 solution<<q<<" "<<ParetoSet[v].array[q]<<endl;
+            }
+        }
+        if(ParetoSet.size()==0)
+        {
+            solution<<1<<endl;
+            for(int v=0;v<n;v++)
+            {
+                solution<<v<<" "<<S0.array[v]<<endl;
             }
         }
         solution.close();
     }
     else
     {
-        cout<<"File did not open\n";
+        cout<<"DataFile did not open\n";
+    }
+    ofstream solutionSet ("Solution.txt");
+	if(solutionSet.is_open())
+    {
+        if(ParetoSet.size()!=0) solutionSet<<ParetoSet.size()<<endl;
+        for(int v=0;v<ParetoSet.size();v++)
+        {
+            //solutionSet<<v+1<<endl;
+            solutionSet<<endl;
+            for(int q=0;q<n;q++)
+            {
+                solutionSet<<q<<" "<<ParetoSet[v].array[q]<<endl;
+            }
+        }
+        if(ParetoSet.size()==0)
+        {
+            solutionSet<<1<<endl;
+            for(int v=0;v<n;v++)
+            {
+                solutionSet<<v<<" "<<S0.array[v]<<endl;
+            }
+        }
+        solutionSet.close();
+    }
+    else
+    {
+        cout<<"Solution File did not open\n";
     }
 	/* Result Display Block */
 	return 0;
