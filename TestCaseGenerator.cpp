@@ -7,7 +7,7 @@ using namespace std;
 
 int main() {
     ofstream testcase ("testcase.txt");
-	if(testcase.is_open())
+    if(testcase.is_open())
     {
         int vm=5;
         long long totalCPU=0,totalMEM=0;
@@ -49,19 +49,19 @@ int main() {
         }
         if(maxMEM>totalMEM)
         {
-            int sMem=((rand()%6)+1)+maxMEM;
+            int sMem=((rand()%4)+1)+maxMEM;
             testcase<<sMem<<endl;
         }
         else
         {
-            int sMem=((rand()%6)+1)+totalMEM;
+            int sMem=((rand()%4)+1)+totalMEM;
             testcase<<sMem<<endl;
         }
         testcase.close();
     }
-	else
+    else
     {
         cout<<"File did not open\n";
     }
-	return 0;
+    return 0;
 }
