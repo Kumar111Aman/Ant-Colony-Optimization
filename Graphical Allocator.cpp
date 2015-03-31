@@ -29,10 +29,10 @@ Server server[20];
 
 struct point p_machines[20];
 Sol sol[5];
-void print_machinnes();
+void print_machinnes(int ,int );
 void initialize_v_machines();
 void initialize_p_machines();
-void print_V_machines(int );
+void print_V_machines(int ,int ,int );
 void initialize_server();
 void initialize_allot();
 
@@ -59,8 +59,8 @@ int main()
 	   	v_machines[i].CPU=c;
 		v_machines[i].MEM=m;
 		//printf("%d %d\n",v_machines[i].CPU,v_machines[i].MEM);
-		v_machines[i].CPU=(v_machines[i].CPU*1000)/4;
-		v_machines[i].MEM=(v_machines[i].MEM*1000)/2;
+		//v_machines[i].CPU=(v_machines[i].CPU*1000)/4;
+		//v_machines[i].MEM=(v_machines[i].MEM*1000)/2;
 	}
 
 	fscanf(fp," %d",&no_of_pm);
@@ -73,8 +73,8 @@ int main()
 		server[i].ThreshCPU=tc;
 		server[i].ThreshMEM=tm;
 		//printf("%d %d \n",server[i].ThreshCPU,server[i].ThreshMEM);
-		server[i].ThreshCPU/=4;
-		server[i].ThreshMEM/=2;
+		//server[i].ThreshCPU/=4;
+		//server[i].ThreshMEM/=2;
 	}
 
 	initialize_p_machines();
@@ -82,7 +82,7 @@ int main()
 	fscanf(fp," %d",&no_of_sol);
 	//printf("%d\n",no_of_sol);
 	
-	for(i=0;i<no_of_sol;i++)
+	for(i=1;i<=no_of_sol;i++)
 	{
 		//initialize_allot();
 	    for(k=0;k<no_of_vm;k++)
@@ -96,15 +96,36 @@ int main()
 	    //print_V_machines();
 	    //cleardevice();
 	}
-	
-	
-	for(i=0;i<no_of_sol;i++)
+	int start , end, page;
+	int no_of_page;
+	for(i=1;i<=no_of_sol;i++)
 	{
-		cleardevice();
-		//initialize_allot();
-		print_machinnes();
-	    print_V_machines(i);
-		getch();	    
+		start =1;
+		end   =3;
+		no_of_page = no_of_pm/3 + ((no_of_pm%3)?1:0);
+		//printf("no of page = %d",no_of_page);
+		for( page = 1 ; page <= no_of_page ; page++ )
+		{
+			cleardevice();
+			
+			/*char text[20];
+			sprintf(text,"solution no. = %d  Page no.   = %d",i,page);
+			outtextxy(10,10,text);*/
+			//initialize_allot();
+			print_machinnes(start, end);
+			print_V_machines(start, end, i);
+			if(page==no_of_page-1)
+			{
+				start=end+1;
+				end=no_of_pm;
+			}
+			else{
+				start=end+1;
+				end+=3;
+			}
+			//printf("page no : %d phy : %d",no_of_page,no_of_pm);
+			getch();
+		}	
 	}
 	fclose(fp);
 	getch();
@@ -112,28 +133,28 @@ int main()
 	return 0;
 }
 
-void print_V_machines(int s)
+void print_V_machines(int start,int end, int s)
 {
 	int i,j;
-	for(i=0;i<no_of_pm;i++)
+	for(i=start;i<=end;i++)
 	{
 		int a,b;
-		a = p_machines[i].x1;
-		b = p_machines[i].y2;
+		a = p_machines[i-1].x1;
+		b = p_machines[i-1].y2;
 		for(j=0;j<no_of_vm;j++)
 		{
-			if( sol[s].vm_allot[j] == i )
+			if( sol[s].vm_allot[j] == i-1 )
 			{
 				int cpu , mem ,xtemp , ytemp;
-				cpu = (v_machines[j].CPU*3)/100;
-				mem = (v_machines[j].MEM*4)/100;
-				xtemp = a + (p_machines[i].x2 - p_machines[i].x1 -cpu)/2 + cpu;
+				cpu = (v_machines[j].CPU*10);
+				mem = (v_machines[j].MEM*20);
+				xtemp = a + (p_machines[i-1].x2 - p_machines[i-1].x1 -cpu)/2 + cpu;
 				ytemp = b;
-				a = a+(p_machines[i].x2 - p_machines[i].x1-cpu)/2;
+				a = a+(p_machines[i-1].x2 - p_machines[i-1].x1-cpu)/2;
 				b = b - mem;
 				//printf("a=%d b=%d xtemp=%d ytemp=%d\n",a,b,xtemp,ytemp);
 				rectangle(a,b,xtemp,ytemp);
-				a = a - (p_machines[i].x2 - p_machines[i].x1-cpu)/2;
+				a = a - (p_machines[i-1].x2 - p_machines[i-1].x1-cpu)/2;
 				char text[5];
 				sprintf(text,"%02d",j+1);
 				outtextxy(a,b+mem-10,text);
@@ -142,28 +163,32 @@ void print_V_machines(int s)
 	}
 }
 
-void print_machinnes()
+void print_machinnes(int start, int end)
 {
 	int i;
-	for(i=0;i<no_of_pm;i++)
+	for(i=start;i<=end;i++)
 	{
 		//printf("x1=%d y1=%d x2=%d y2=%d\n",p_machines[i].x1,p_machines[i].y1,p_machines[i].x2,p_machines[i].y2);
-		rectangle(p_machines[i].x1,p_machines[i].y1,p_machines[i].x2,p_machines[i].y2);
+		rectangle(p_machines[i-1].x1,p_machines[i-1].y1,p_machines[i-1].x2,p_machines[i-1].y2);
 		char text[5];
-		sprintf(text,"PM %d",i+1);
-		outtextxy(p_machines[i].x1+5,p_machines[i].y2+20,text);
+		sprintf(text,"PM %d",i);
+		sprintf(text,"PM %d",i);
+		outtextxy(p_machines[i-1].x1+5,p_machines[i-1].y2+20,text);
 	}
 }
 
 void initialize_p_machines()
 {
 	int i,j;
-	for(i=0,j=0;i<no_of_pm;i++,j+=100)
+	for(i=0,j=0;i<no_of_pm;i++,j+=200)
 	{
-		p_machines[i].x1=j+10;
-		p_machines[i].y2=340;
-		p_machines[i].y1=p_machines[i].y2 - server[i].ThreshMEM*40;
-		p_machines[i].x2=p_machines[i].x1+30*server[i].ThreshCPU;
+		p_machines[i].x1=j+20;
+		p_machines[i].y2=400;
+		p_machines[i].y1=p_machines[i].y2 - server[i].ThreshMEM*20;
+		p_machines[i].x2=p_machines[i].x1+10*server[i].ThreshCPU;
+		
+		if(j==400)
+		j=-200;
 		//printf("%d %d %d %d\n",p_machines[i].x1,p_machines[i].y1,p_machines[i].x2,p_machines[i].y2);
 	}
 }
