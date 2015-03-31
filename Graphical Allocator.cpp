@@ -176,6 +176,7 @@ void print_machinnes(int start, int end ,int color)
 		sprintf(text,"PM %d",i);
 		sprintf(text,"PM %d",i);
 		outtextxy(p_machines[i-1].x1+5,p_machines[i-1].y2+20,text);
+		color++;
 	}
 }
 
