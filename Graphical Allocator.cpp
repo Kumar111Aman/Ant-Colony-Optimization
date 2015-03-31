@@ -29,7 +29,7 @@ Server server[20];
 
 struct point p_machines[20];
 Sol sol[5];
-void print_machinnes(int ,int );
+void print_machinnes(int ,int , int);
 void initialize_v_machines();
 void initialize_p_machines();
 void print_V_machines(int ,int ,int );
@@ -96,6 +96,7 @@ int main()
 	    //print_V_machines();
 	    //cleardevice();
 	}
+	printf("\n\n\n");
 	int start , end, page;
 	int no_of_page;
 	for(i=1;i<=no_of_sol;i++)
@@ -103,16 +104,16 @@ int main()
 		start =1;
 		end   =3;
 		no_of_page = no_of_pm/3 + ((no_of_pm%3)?1:0);
-		//printf("no of page = %d",no_of_page);
+		//printf("tno of page = %d",no_of_page);
 		for( page = 1 ; page <= no_of_page ; page++ )
 		{
 			cleardevice();
-			
+			printf("\t\t\tsolution = %d  page = %d \r",i,page);
 			/*char text[20];
 			sprintf(text,"solution no. = %d  Page no.   = %d",i,page);
 			outtextxy(10,10,text);*/
 			//initialize_allot();
-			print_machinnes(start, end);
+			print_machinnes(start, end, i);
 			print_V_machines(start, end, i);
 			if(page==no_of_page-1)
 			{
@@ -163,13 +164,14 @@ void print_V_machines(int start,int end, int s)
 	}
 }
 
-void print_machinnes(int start, int end)
+void print_machinnes(int start, int end ,int color)
 {
 	int i;
 	for(i=start;i<=end;i++)
 	{
 		//printf("x1=%d y1=%d x2=%d y2=%d\n",p_machines[i].x1,p_machines[i].y1,p_machines[i].x2,p_machines[i].y2);
 		rectangle(p_machines[i-1].x1,p_machines[i-1].y1,p_machines[i-1].x2,p_machines[i-1].y2);
+		//floodfill(p_machines[i-1].x1+1,p_machines[i-1].y1+1,color*10);
 		char text[5];
 		sprintf(text,"PM %d",i);
 		sprintf(text,"PM %d",i);
