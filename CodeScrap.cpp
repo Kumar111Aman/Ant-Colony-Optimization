@@ -484,7 +484,7 @@ void setInitials(solution& a)
 
 bool compatibleVM(solution antSol,int i,VM vm[],ll n,int j,Server s,map<ll,qualifiedVM> omega)
 {
-	ll remCPU=s.ThreshMEM,remMEM=s.ThreshCPU;
+	ll remCPU=s.ThreshCPU,remMEM=s.ThreshMEM;
 	if(antSol.array[i]==-1 && (omega.find((ll)i)==omega.cend()))
 	{
 		for(register int k=0;k<n;k++)
