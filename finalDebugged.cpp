@@ -83,7 +83,7 @@ void randomSortVM(VM vm[], ll len);
 void viewVM(VM v[], ll n);
 void viewServer(Server s[], ll m);
 void viewPT(ll n, ll m);
-void viewSolution(solution s, ll n);             // to view a perticular solution
+void viewSolution(solution s, ll n);
 
 int main() {
 
@@ -102,6 +102,7 @@ int main() {
     // cout<<"Number of Virtual Machines: ";
     //cin>>n;
     fscanf(fp,"%lld",&n);
+    //cout<<n<<endl;
     if(n>MAX)           // Putting Bounds
     {
         cout<<"Out of Bounds\n";
@@ -113,6 +114,7 @@ int main() {
     {
         //cin>>vmC>>vmM;
         fscanf(fp,"%lf %lf",&vmC,&vmM);
+        //cout<<vmC<<" "<<vmM<<endl;
         vm[i].CPU=(ll)(10000*vmC);
         vm[i].MEM=(ll)(10000*vmM);
         vm[i].vmID=i;
@@ -123,6 +125,7 @@ int main() {
     // cout<<"\nNumber of Available Servers: ";
     //cin>>m;
     fscanf(fp,"%lld",&m);
+    //cout<<m<<endl;
     if(m>MAX)           // Putting Bounds
     {
         cout<<"Out of Bounds\n";
@@ -134,6 +137,7 @@ int main() {
     {
         //cin>>serverC>>serverM;
         fscanf(fp,"%lf %lf",&serverC,&serverM);
+        //cout<<serverC<<" "<<serverM<<endl;
         server[i].ThreshCPU=(ll)(10000*serverC);
         server[i].ThreshMEM=(ll)(10000*serverM);
         server[i].peakPower=INT_MIN;
@@ -151,6 +155,17 @@ int main() {
     }
     fclose(fp);
 
+    /*cout<<"vm: "<<n<<endl;
+    for(int p=0;p<n;p++)
+    {
+        cout<<vm[p].CPU<<" "<<vm[p].MEM<<endl;
+    }
+    cout<<"server: "<<m<<endl;
+    for(int p=0;p<m;p++)
+    {
+        cout<<server[p].ThreshCPU<<" "<<server[p].ThreshMEM<<endl;
+    }*/
+
     /* *********************** Initialization ******************************* */
 
 	vector<solution> ParetoSet;
@@ -162,6 +177,8 @@ int main() {
 		cout<<"No Greedy Solution Found!!\n";
 		return 0;
 	}
+	//printGreedySolution(S0,n,m);
+	//randomSortVM(vm,n);
 	initializePheromone(S0,server,m,vm,n);
 
 	/* *********************** Iterative Loop ******************************* */
@@ -170,15 +187,18 @@ int main() {
 	for(int it=1;it<=NO_OF_ITERATIONS;it++)
 	{
 	    vector<solution> CurrentSol;
+		//cout<<"here\n";
 		for(register int k=1;k<=NO_OF_ANTS;k++)
 		{
-		    randomSort(serverClone,m);
+		    //cout<<"No of ants: "<<k<<endl;
+			randomSort(serverClone,m);
 			solution antSol;
 			setInitials(antSol);
 			ll VMcount=0;
 			for(int j=0;j<m;j++)
 			{
-			    while(true)
+			    //cout<<j<<endl;
+				while(true)
 				{
 					map<ll,qualifiedVM> omega;
 					for(register int i=0;i<n;i++)
@@ -187,18 +207,23 @@ int main() {
 						{
 							qualifiedVM t;      		    			 		 //Create set of these VM's
 							prepare(t,i,antSol,n,serverClone[j].serverID,m);      //getdesirability();getprobability();
+							//cout<<t.desirability<<"\t"<<t.probability<<endl;
 							omega[i]=t;
 						}
 					}
-                    if(omega.empty())						/*No remaining VM fits into server anymore OR Set is Empty */
+                    //cout<<"here\n";
+					if(omega.empty())						/*No remaining VM fits into server anymore OR Set is Empty */
 					{
-					    break;
+					    //cout<<"break\n";
+						break;
 					}
 					double q=drawQ();						//Draw q random number between 0 to 1
 					int i;
+					//cout<<"qdrawed "<<q<<endl;
 					if(q<=Q0)
 					{
 						i=exploitation(omega); //Exploitaion - Generate i(VM) to place in this host
+						//cout<<"exploited "<<i<<endl;
 						if(i==-1)
                         {
                             cout<<"exploitation error\n";
@@ -209,6 +234,7 @@ int main() {
 					else
 					{
 						i=exploration(omega);					//Exploration Get any number according to the probability distribution function formula
+						//cout<<"explored "<<i<<endl;
 						if(i==-1)
                         {
                             cout<<"exploration error\n";
@@ -216,19 +242,32 @@ int main() {
                         }
 						antSol.array[i]=serverClone[j].serverID;
 					}
-					VMcount++;									//Incrementing, since another VM got placed
+					//cout<<"exploration done\n";
+					VMcount++;
+					//cout<<"VMcount: "<<VMcount<<endl;                              //Incrementing, since another VM got placed
+					//cout<<omega.size()<<endl;
 					if(pheromoneTrail[i][serverClone[j].serverID]==T0)
 					{
 					    localPheromoneUpdate1(i,serverClone[j].serverID);					//Apply Local updating Rule
 					}
 					else localPheromoneUpdate(i,serverClone[j].serverID);
+					/*if(it==6 && k==12){
+                        viewSolution(antSol,n);
+                    }*/
 				}
+				//cout<<"continue\n";
 				if(VMcount==n)		/*If all VM's are placed */       //break of server choosing
 				{
-				    break;			//a solution is created
+				    //cout<<"break"<<endl;
+					break;			//a solution is created
 				}
 			}
+			//viewPT(n,m);
+			//cout<<"solution "<<k<<" generated\n";
 			CurrentSol.push_back(antSol);
+			//cout<<"Size: "<<CurrentSol.size()<<endl;
+			//cout<<"solution pushed\n";
+			//cout<<"ant: "<<k<<" completed"<<endl;
 		}
 
 		/*
@@ -236,24 +275,25 @@ int main() {
 			1.Calculate values of P(S) and W(S) for each solution S
 			2.Update the Pareto set according to dominations
 		*/
+		//cout<<"Current Solution Size: "<<CurrentSol.size()<<endl;
 		updatePandW(CurrentSol,vm,n,m);
 		updateDomination(ParetoSet,CurrentSol);
 		deleteDuplicates(ParetoSet,n);
 		findIllSolution(ParetoSet,n);
 		updateParetoIteration(ParetoSet);
-		
+		//cout<<"ParetorSet Size: "<<ParetoSet.size()<<endl;
+
 		for(register int p=0;p<ParetoSet.size();p++)/* Each non-dominated solution in Pareto set */
 		{
 			globalPheromoneUpdate(ParetoSet[p],it,n);						//Apply Global Updating
 		}
-		cout<<"Iteration "<<it<<" Completed\n";								//For debugging purpose
+		cout<<"Iteration "<<it<<" Completed\n";
 	}
 	deleteDuplicates(ParetoSet,n);
 	findIllSolution(ParetoSet,n);
-	printSolution(ParetoSet,n,m,S0);								//Print Solution (Pareto set)
-	
-	/* *********************** Result Stored in file *************************** */
-	
+	printSolution(ParetoSet,n,m,S0);								//Print Pareto set
+	/* Result Display Block */
+	//putting solution in file
 	ofstream solution ("DataFile.txt");
 	if(solution.is_open())
     {
@@ -270,6 +310,7 @@ int main() {
         if(ParetoSet.size()!=0) solution<<ParetoSet.size()<<endl;
         for(int v=0;v<ParetoSet.size();v++)
         {
+            //solution<<v+1<<endl;
             solution<<endl;
             for(int q=0;q<n;q++)
             {
@@ -296,6 +337,7 @@ int main() {
         if(ParetoSet.size()!=0) solutionSet<<ParetoSet.size()<<endl;
         for(int v=0;v<ParetoSet.size();v++)
         {
+            //solutionSet<<v+1<<endl;
             solutionSet<<endl;
             for(int q=0;q<n;q++)
             {
@@ -316,11 +358,35 @@ int main() {
     {
         cout<<"Solution File did not open\n";
     }
-	
+	/* Result Display Block */
 	return 0;
 }
 
 /* **** Function Definitions ************************************************ */
+
+void viewSolution(solution s, ll n)
+{
+    //cout<<"enter\n";
+    for(int i=0;i<n;i++)
+    {
+        cout<<i<<" - "<<s.array[i]<<endl;
+    }
+    //cout<<"exit\n";
+}
+
+void viewPT(ll n, ll m)
+{
+    cout<<"Pheromone Trail Matrix:\n";
+    for(register int i=0;i<n;i++)
+	{
+		for(register int j=0;j<m;j++)
+		{
+			printf("%.7f\t",pheromoneTrail[i][j]);
+		}
+		cout<<endl;
+	}
+	cout<<endl;
+}
 
 bool check(ll n,ll m)
 {
@@ -339,10 +405,13 @@ bool check(ll n,ll m)
 		vmCPUSum+=vm[i].CPU;
 		vmMEMSum+=vm[i].MEM;
 	}
+	//cout<<vmCPUSum<<" "<<vmMEMSum<<endl;
 	maxCPU*=2;
 	maxMEM*=2;
 	for(register int i=0;i<m;i++)
 	{
+		//cout<<server[i].ThreshCPU<<" "<<maxCPU<<endl;
+		//cout<<server[i].ThreshMEM<<" "<<maxMEM<<endl;
 		if(server[i].ThreshCPU<maxCPU)
 		{
 			return false;
@@ -354,6 +423,7 @@ bool check(ll n,ll m)
 		serverCPUSum+=server[i].ThreshCPU;
 		serverMEMSum+=server[i].ThreshMEM;
 	}
+	//cout<<serverCPUSum<<" "<<serverMEMSum<<endl;
 	if(serverCPUSum>vmCPUSum && serverMEMSum>vmMEMSum)
 	return true;
 	else return false;
@@ -372,7 +442,11 @@ bool getVM(VM a, VM b)							//compare function for randomSortVM function
 void generateGreedySolution(solution& S0, Server server[], Server serverO[], ll m, VM vm[], VM vmO[],ll n)
 {
 	sort(server,server+m, getServer);
+	// cout<<"servers :\n";
+	// viewServer(server,m);
 	sort(vm, vm+n, getVM);
+	// cout<<"vm :\n";
+	// viewVM(vm,n);
 	ll j=0,remCPU=server[0].ThreshCPU,remMEM=server[0].ThreshMEM;
 	double normalisedCPU=0,normalisedMEM=0,normalisedRemCPU=0,normalisedRemMEM=0;
 	double resourceWastage=0,normalisedPowerConsumption=0;
@@ -381,6 +455,7 @@ void generateGreedySolution(solution& S0, Server server[], Server serverO[], ll 
 		if(remCPU>=vm[i].CPU && remMEM>=vm[i].MEM)
 		{
 			S0.array[vm[i].vmID]=server[j].serverID;
+			//S0.array[i]=j;
 			remCPU-=(vm[i].CPU);remMEM-=(vm[i].MEM);
 			continue;
 		}
@@ -429,6 +504,7 @@ void initializePheromone(solution S0,Server b[],ll m, VM a[], ll n)
 {
 	double t0=1/(double)(n*(S0.P+S0.W));
 	T0=t0;
+	//cout<<t0<<endl;
 	for(register int i=0;i<n;i++)
 	{
 		for(register int j=0;j<m;j++)
@@ -446,6 +522,33 @@ void randomSort(Server server[], ll len)
 		Server temp=server[i];
 		server[i]=server[index];
 		server[index]=temp;
+	}
+}
+
+void viewServer(Server s[], ll m)
+{
+	for(int i=0;i<m;i++)
+	{
+		cout<<s[i].serverID<<" "<<s[i].ThreshCPU<<" "<<s[i].ThreshMEM<<endl;
+	}
+}
+
+void randomSortVM(VM vm[], ll len)
+{
+	for(register int i=len-1;i>=0;i--)
+	{
+		ll index=rand()%(i+1);
+		VM temp=vm[i];
+		vm[i]=vm[index];
+		vm[index]=temp;
+	}
+}
+
+void viewVM(VM v[], ll n)
+{
+	for(int i=0;i<n;i++)
+	{
+		cout<<v[i].vmID<<" "<<v[i].CPU<<" "<<v[i].MEM<<endl;
 	}
 }
 
@@ -582,6 +685,11 @@ ll exploration(map<ll,qualifiedVM> omega)                  //This is not working
 		probabDistribution[1][i++]=(it->first);
 	}
 	ll num=rand()%(sum+1);
+	//cout<<num<<endl;
+	/*for(int x=0;x<i;x++)
+    {
+        cout<<probabDistribution[1][x]<<" "<<probabDistribution[0][x]<<endl;
+    }*/
 	for(register int j=0;j<i;j++)
 	{
 		if(num<=probabDistribution[0][j])
@@ -593,14 +701,20 @@ ll exploration(map<ll,qualifiedVM> omega)                  //This is not working
 
 void localPheromoneUpdate1(int i, int j)
 {
+	//cout<<"Pheromone Update Called\n";
 	double alpha=(double)(RHO_LOCAL)*pheromoneTrail[i][j];
+	//cout<<pheromoneTrail[i][j]<<" "<<alpha<<endl;
 	pheromoneTrail[i][j]=alpha;
+	//cout<<"Pheromone Updated\n";
 }
 
 void localPheromoneUpdate(int i, int j)
 {
+	//cout<<"Pheromone Update Called\n";
 	double alpha=(double)(1-RHO_LOCAL)*pheromoneTrail[i][j] + (RHO_LOCAL*T0);
+	//cout<<pheromoneTrail[i][j]<<" "<<alpha<<endl;
 	pheromoneTrail[i][j]=alpha;
+	//cout<<"Pheromone Updated\n";
 }
 
 void updatePandW(vector<solution>& CurrSol,VM vm[],ll n,ll m)
@@ -752,10 +866,13 @@ void globalPheromoneUpdate(solution s,ll t,ll n)
 {
 	double lembda=(double)NO_OF_ANTS/((double)(t-s.NO_OF_IT+1));
 	double B=((RHO_GLOBAL*lembda)/((double)(s.P+s.W)));
+	//cout<<"Next Solution: "<<s.NO_OF_IT<<endl;
 	for(register int i=0;i<n;i++)
 	{
 	    double temp=(double)((1-RHO_GLOBAL)*pheromoneTrail[i][s.array[i]])+B;
+		//cout<<pheromoneTrail[i][s.array[i]]<<" "<<temp<<endl;
 		pheromoneTrail[i][s.array[i]]=temp;
+		//cout<<pheromoneTrail[i][s.array[i]]<<"\t";
 	}
 }
 
@@ -842,55 +959,4 @@ void printSolution(vector<solution> ParetoSet, int totalVM, int totalServers, so
 		}
 		cout<<"Power Wastage: "<<ParetoSet[i].P<<"\t"<<"Memory Wastage: "<<ParetoSet[i].W<<endl;
 	}
-}
-
-/* **** Supporting Function's Definitions ************************************* */
-
-void randomSortVM(VM vm[], ll len)
-{
-	for(register int i=len-1;i>=0;i--)
-	{
-		ll index=rand()%(i+1);
-		VM temp=vm[i];
-		vm[i]=vm[index];
-		vm[index]=temp;
-	}
-}
-
-void viewVM(VM v[], ll n)
-{
-	for(int i=0;i<n;i++)
-	{
-		cout<<v[i].vmID<<" "<<v[i].CPU<<" "<<v[i].MEM<<endl;
-	}
-}
-
-void viewServer(Server s[], ll m)
-{
-	for(int i=0;i<m;i++)
-	{
-		cout<<s[i].serverID<<" "<<s[i].ThreshCPU<<" "<<s[i].ThreshMEM<<endl;
-	}
-}
-
-void viewPT(ll n, ll m)
-{
-    cout<<"Pheromone Trail Matrix:\n";
-    for(register int i=0;i<n;i++)
-	{
-		for(register int j=0;j<m;j++)
-		{
-			printf("%.7f\t",pheromoneTrail[i][j]);
-		}
-		cout<<endl;
-	}
-	cout<<endl;
-}
-
-void viewSolution(solution s, ll n)
-{
-    for(int i=0;i<n;i++)
-    {
-        cout<<i<<" - "<<s.array[i]<<endl;
-    }
 }
