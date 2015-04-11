@@ -20,15 +20,15 @@ typedef struct s
 }Server;
 
 typedef struct solution{
-	int vm_allot[20];
+	int vm_allot[51];
 }Sol;
 
 int no_of_pm , no_of_vm ;
-VM v_machines[20];
-Server server[20];
+VM v_machines[51];
+Server server[51];
 
-struct point p_machines[20];
-Sol sol[5];
+struct point p_machines[51];
+Sol sol[11];
 void print_machinnes(int ,int , int);
 void initialize_v_machines();
 void initialize_p_machines();
@@ -38,7 +38,7 @@ void initialize_allot();
 
 int main()
 {
-   	//int gd = DETECT, gm, no_of_sol;
+	//int gd = DETECT, gm, no_of_sol;
 	//initgraph(&gd, &gm, "C:\\TC\\BGI");
 	int gd = DETECT, gm;
 	initgraph(&gd, &gm, "C:\\TC\\BGI");
@@ -56,7 +56,7 @@ int main()
 		int c,m;
 		fscanf(fp," %d %d",&c,&m);
 		//printf("%d %d \n",c,m);
-	   	v_machines[i].CPU=c;
+		v_machines[i].CPU=c;
 		v_machines[i].MEM=m;
 		//printf("%d %d\n",v_machines[i].CPU,v_machines[i].MEM);
 		//v_machines[i].CPU=(v_machines[i].CPU*1000)/4;
@@ -66,7 +66,7 @@ int main()
 	fscanf(fp," %d",&no_of_pm);
 	//printf("%d\n",no_of_pm);
 	for(i=0;i<no_of_pm;i++)
-	{         
+	{
 		int tc,tm;
 		fscanf(fp," %d %d",&tc,&tm);
 		//printf("%d %d \n",tc,tm);
@@ -81,7 +81,7 @@ int main()
     int k;
 	fscanf(fp," %d",&no_of_sol);
 	//printf("%d\n",no_of_sol);
-	
+
 	for(i=1;i<=no_of_sol;i++)
 	{
 		//initialize_allot();
@@ -126,7 +126,7 @@ int main()
 			}
 			//printf("page no : %d phy : %d",no_of_page,no_of_pm);
 			getch();
-		}	
+		}
 	}
 	fclose(fp);
 	getch();
@@ -189,7 +189,7 @@ void initialize_p_machines()
 		p_machines[i].y2=400;
 		p_machines[i].y1=p_machines[i].y2 - server[i].ThreshMEM*20;
 		p_machines[i].x2=p_machines[i].x1+10*server[i].ThreshCPU;
-		
+
 		if(j==400)
 		j=-200;
 		//printf("%d %d %d %d\n",p_machines[i].x1,p_machines[i].y1,p_machines[i].x2,p_machines[i].y2);
@@ -221,7 +221,7 @@ void initialize_server()
 
 void initialize_allot()
 {
-	
+
 	for(i=0;i<no_of_vm;i++)
 	{
 		fscanf(fp," %d",&j);
